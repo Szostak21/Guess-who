@@ -18,7 +18,8 @@ class CurtainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: nextPlayer == 1 ? Colors.blue.shade900 : Colors.red.shade900,
+      backgroundColor:
+          nextPlayer == 1 ? Colors.blue.shade900 : Colors.red.shade900,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -26,27 +27,21 @@ class CurtainScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.visibility_off,
-                  size: 120,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-                const SizedBox(height: 32),
                 Text(
-                  title ?? 'Player $nextPlayer\'s Turn',
+                  title ?? 'Player $nextPlayer Turn',
                   style: const TextStyle(
-                    fontSize: 42,
+                    fontSize: 56,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
                 Text(
                   message ?? 'Pass the device to Player $nextPlayer',
                   style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 28,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -59,7 +54,9 @@ class CurtainScreen extends StatelessWidget {
                       vertical: 20,
                     ),
                     backgroundColor: Colors.white,
-                    foregroundColor: nextPlayer == 1 ? Colors.blue.shade900 : Colors.red.shade900,
+                    foregroundColor: nextPlayer == 1
+                        ? Colors.blue.shade900
+                        : Colors.red.shade900,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -74,10 +71,10 @@ class CurtainScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  '⚠️ Make sure the other player isn\'t looking!',
+                  'Make sure the other player isn\'t looking!',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 16,
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
                   textAlign: TextAlign.center,

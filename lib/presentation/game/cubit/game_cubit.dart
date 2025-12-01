@@ -43,18 +43,18 @@ class GameCubit extends Cubit<GameState> {
   /// Transition from setup to player 1 character selection
   void beginCharacterSelection() {
     if (state.phase != GamePhase.setup) return;
-    
+
     emit(state.copyWith(phase: GamePhase.player1Selection));
   }
 
   /// Player 1 selects their secret character
   void player1SelectCharacter(String characterId) {
     if (state.phase != GamePhase.player1Selection) return;
-    
+
     final updatedBoard = state.player1Board.copyWith(
       secretCharacterId: characterId,
     );
-    
+
     emit(state.copyWith(
       player1Board: updatedBoard,
       phase: GamePhase.player2Selection,
@@ -64,11 +64,11 @@ class GameCubit extends Cubit<GameState> {
   /// Player 2 selects their secret character
   void player2SelectCharacter(String characterId) {
     if (state.phase != GamePhase.player2Selection) return;
-    
+
     final updatedBoard = state.player2Board.copyWith(
       secretCharacterId: characterId,
     );
-    
+
     // Both players ready, start the game
     emit(state.copyWith(
       player2Board: updatedBoard,
@@ -82,22 +82,23 @@ class GameCubit extends Cubit<GameState> {
   void startTurn(int player) {
     if (state.phase != GamePhase.playing) return;
     if (state.currentPlayer != player) return;
-    
-    // Turn already started, just confirming
+
+    // Reset flipped state for new turn
     emit(state.copyWith(
       currentPlayer: player,
       currentAction: TurnAction.asking,
+      hasFlippedThisTurn: false,
     ));
   }
 
   /// Toggle between asking and guessing mode
   void toggleGuessMode() {
     if (state.phase != GamePhase.playing) return;
-    
+
     final newAction = state.currentAction == TurnAction.asking
         ? TurnAction.guessing
         : TurnAction.asking;
-    
+
     emit(state.copyWith(currentAction: newAction));
   }
 
@@ -105,14 +106,20 @@ class GameCubit extends Cubit<GameState> {
   void toggleCharacter(String characterId) {
     if (state.phase != GamePhase.playing) return;
     if (state.currentAction != TurnAction.asking) return;
-    
+
     final currentBoard = state.getBoardForPlayer(state.currentPlayer);
     final updatedBoard = currentBoard.toggleCharacter(characterId);
-    
+
     if (state.currentPlayer == 1) {
-      emit(state.copyWith(player1Board: updatedBoard));
+      emit(state.copyWith(
+        player1Board: updatedBoard,
+        hasFlippedThisTurn: true,
+      ));
     } else {
-      emit(state.copyWith(player2Board: updatedBoard));
+      emit(state.copyWith(
+        player2Board: updatedBoard,
+        hasFlippedThisTurn: true,
+      ));
     }
   }
 
@@ -120,10 +127,10 @@ class GameCubit extends Cubit<GameState> {
   void makeGuess(String guessedCharacterId) {
     if (state.phase != GamePhase.playing) return;
     if (state.currentAction != TurnAction.guessing) return;
-    
+
     final opponentBoard = state.getOpponentBoard(state.currentPlayer);
     final isCorrect = opponentBoard.secretCharacterId == guessedCharacterId;
-    
+
     if (isCorrect) {
       // Player guessed correctly - they win!
       _endGame(winner: state.currentPlayer);
@@ -131,7 +138,7 @@ class GameCubit extends Cubit<GameState> {
       // Wrong guess - eliminate the guessed character and end turn
       final currentBoard = state.getBoardForPlayer(state.currentPlayer);
       final updatedBoard = currentBoard.eliminateCharacter(guessedCharacterId);
-      
+
       if (state.currentPlayer == 1) {
         emit(state.copyWith(
           player1Board: updatedBoard,
@@ -152,23 +159,24 @@ class GameCubit extends Cubit<GameState> {
   void endTurn() {
     if (state.phase != GamePhase.playing) return;
     if (state.currentAction != TurnAction.asking) return;
-    
+
     final opponentBoard = state.getOpponentBoard(state.currentPlayer);
-    
+
     // Check if opponent has only 1 character left
     // If so, the current player MUST guess on their next turn
     // But for now, we just switch turns
-    
+
     emit(state.copyWith(
       currentPlayer: state.nextPlayer,
       currentAction: TurnAction.asking,
+      hasFlippedThisTurn: false,
     ));
   }
 
   /// End the game with a winner
   void _endGame({required int winner}) {
     final result = winner == 1 ? GameResult.player1Won : GameResult.player2Won;
-    
+
     emit(state.copyWith(
       phase: GamePhase.finished,
       winner: winner,

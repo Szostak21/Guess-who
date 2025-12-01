@@ -14,22 +14,25 @@ class GameState extends Equatable {
   final Deck deck;
   final GameMode mode;
   final GamePhase phase;
-  
+
   /// Current player (1 or 2)
   final int currentPlayer;
-  
+
   /// Current turn action (asking or guessing)
   final TurnAction? currentAction;
-  
+
+  /// Whether the current player has flipped any characters this turn
+  final bool hasFlippedThisTurn;
+
   final PlayerBoard player1Board;
   final PlayerBoard player2Board;
-  
+
   /// Winner (1 or 2, null if game not finished)
   final int? winner;
-  
+
   /// Game result details
   final GameResult? result;
-  
+
   final DateTime createdAt;
   final DateTime? finishedAt;
 
@@ -40,6 +43,7 @@ class GameState extends Equatable {
     required this.phase,
     required this.currentPlayer,
     this.currentAction,
+    this.hasFlippedThisTurn = false,
     required this.player1Board,
     required this.player2Board,
     this.winner,
@@ -61,7 +65,7 @@ class GameState extends Equatable {
   }) {
     final characterIds = deck.characters.map((c) => c.id).toList();
     final now = DateTime.now();
-    
+
     return GameState(
       gameId: gameId,
       deck: deck,
@@ -89,6 +93,7 @@ class GameState extends Equatable {
         phase,
         currentPlayer,
         currentAction,
+        hasFlippedThisTurn,
         player1Board,
         player2Board,
         winner,
@@ -123,6 +128,7 @@ class GameState extends Equatable {
     GamePhase? phase,
     int? currentPlayer,
     TurnAction? currentAction,
+    bool? hasFlippedThisTurn,
     PlayerBoard? player1Board,
     PlayerBoard? player2Board,
     int? winner,
@@ -137,6 +143,7 @@ class GameState extends Equatable {
       phase: phase ?? this.phase,
       currentPlayer: currentPlayer ?? this.currentPlayer,
       currentAction: currentAction ?? this.currentAction,
+      hasFlippedThisTurn: hasFlippedThisTurn ?? this.hasFlippedThisTurn,
       player1Board: player1Board ?? this.player1Board,
       player2Board: player2Board ?? this.player2Board,
       winner: winner ?? this.winner,

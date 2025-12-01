@@ -68,7 +68,7 @@ class _CharacterCardState extends State<CharacterCard>
   @override
   Widget build(BuildContext context) {
     final isEliminated = widget.state.isEliminated;
-    
+
     return GestureDetector(
       onTap: widget.onTap,
       child: AnimatedBuilder(
@@ -86,9 +86,7 @@ class _CharacterCardState extends State<CharacterCard>
           return Transform(
             transform: transform,
             alignment: Alignment.center,
-            child: showBack
-                ? _buildEliminatedSide()
-                : _buildActiveSide(),
+            child: showBack ? _buildEliminatedSide() : _buildActiveSide(),
           );
         },
       ),
@@ -99,9 +97,7 @@ class _CharacterCardState extends State<CharacterCard>
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: widget.isSelected
-              ? Colors.green
-              : Colors.grey.shade400,
+          color: widget.isSelected ? Colors.green : Colors.grey.shade400,
           width: widget.isSelected ? 3 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -121,7 +117,7 @@ class _CharacterCardState extends State<CharacterCard>
                   )
                 : _buildPlaceholder(),
           ),
-          
+
           // Character name
           Positioned(
             bottom: 0,
@@ -143,13 +139,13 @@ class _CharacterCardState extends State<CharacterCard>
               ),
             ),
           ),
-          
+
           // Selection indicator
           if (widget.isSelectionMode && widget.isSelected)
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.3),
+                  color: Colors.green.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -172,46 +168,34 @@ class _CharacterCardState extends State<CharacterCard>
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.red.shade300,
+            color: Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade400,
-              Colors.grey.shade600,
-            ],
-          ),
+          color: Colors.grey.shade800,
         ),
         child: Stack(
           children: [
-            // X mark
-            Center(
-              child: Icon(
-                Icons.close,
-                color: Colors.red.shade700,
-                size: 64,
+            // Darker overlay
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.black.withValues(alpha: 0.6),
               ),
             ),
-            // Optional: Show character name on back
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                color: Colors.black54,
+            // Character name centered
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: Text(
                   widget.character.name,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
