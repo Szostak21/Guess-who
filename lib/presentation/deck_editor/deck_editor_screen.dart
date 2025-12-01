@@ -330,14 +330,16 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: canAddMore ? _showAddCharacterDialog : null,
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, color: Colors.white),
                   label: Text(
                     canAddMore
                         ? 'Add Character'
                         : 'Maximum $_maxCharacters reached',
+                    style: const TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.all(12),
                     disabledBackgroundColor: Colors.grey,
                   ),
