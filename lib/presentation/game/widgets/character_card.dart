@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../../../data/models/character.dart';
 import '../../../data/models/character_state.dart';
 
 /// Widget to display a single character card in the grid
-class CharacterCard extends StatelessWidget {
+class CharacterCard extends StatefulWidget {
   final Character character;
   final CharacterState state;
   final VoidCallback onTap;
@@ -20,42 +21,181 @@ class CharacterCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<CharacterCard> createState() => _CharacterCardState();
+}
+
+class _CharacterCardState extends State<CharacterCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _flipAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _flipAnimation = Tween<double>(begin: 0, end: math.pi).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    // Start flipped if already eliminated
+    if (widget.state.isEliminated) {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(CharacterCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Animate when elimination state changes
+    if (oldWidget.state.isEliminated != widget.state.isEliminated) {
+      if (widget.state.isEliminated) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isEliminated = state.isEliminated;
+    final isEliminated = widget.state.isEliminated;
     
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _flipAnimation,
+        builder: (context, child) {
+          // Calculate the angle for 3D rotation
+          final angle = _flipAnimation.value;
+          final transform = Matrix4.identity()
+            ..setEntry(3, 2, 0.001) // perspective
+            ..rotateY(angle);
+
+          // Determine if we're showing the back (eliminated) side
+          final showBack = angle > math.pi / 2;
+
+          return Transform(
+            transform: transform,
+            alignment: Alignment.center,
+            child: showBack
+                ? _buildEliminatedSide()
+                : _buildActiveSide(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActiveSide() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: widget.isSelected
+              ? Colors.green
+              : Colors.grey.shade400,
+          width: widget.isSelected ? 3 : 1,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Stack(
+        children: [
+          // Character image or placeholder
+          Center(
+            child: widget.character.imagePath != null
+                ? Image.asset(
+                    widget.character.imagePath!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildPlaceholder();
+                    },
+                  )
+                : _buildPlaceholder(),
+          ),
+          
+          // Character name
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              color: Colors.black54,
+              child: Text(
+                widget.character.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          
+          // Selection indicator
+          if (widget.isSelectionMode && widget.isSelected)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 48,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEliminatedSide() {
+    // Mirror the eliminated side so text appears correctly
+    return Transform(
+      transform: Matrix4.rotationY(math.pi),
+      alignment: Alignment.center,
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected
-                ? Colors.green
-                : isEliminated
-                    ? Colors.red.shade300
-                    : Colors.grey.shade400,
-            width: isSelected ? 3 : 1,
+            color: Colors.red.shade300,
+            width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
-          color: isEliminated
-              ? Colors.grey.shade300
-              : Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade400,
+              Colors.grey.shade600,
+            ],
+          ),
         ),
         child: Stack(
           children: [
-            // Character image or placeholder
+            // X mark
             Center(
-              child: character.imagePath != null
-                  ? Image.asset(
-                      character.imagePath!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildPlaceholder();
-                      },
-                    )
-                  : _buildPlaceholder(),
+              child: Icon(
+                Icons.close,
+                color: Colors.red.shade700,
+                size: 64,
+              ),
             ),
-            
-            // Character name
+            // Optional: Show character name on back
             Positioned(
               bottom: 0,
               left: 0,
@@ -64,9 +204,9 @@ class CharacterCard extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 color: Colors.black54,
                 child: Text(
-                  character.name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  widget.character.name,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -76,38 +216,6 @@ class CharacterCard extends StatelessWidget {
                 ),
               ),
             ),
-            
-            // Eliminated overlay
-            if (isEliminated)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.red,
-                    size: 48,
-                  ),
-                ),
-              ),
-            
-            // Selection indicator
-            if (isSelectionMode && isSelected)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 48,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
