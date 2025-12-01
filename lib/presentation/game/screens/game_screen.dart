@@ -17,6 +17,7 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   bool _showCurtain = false;
   bool _showPlayer2Curtain = false;
+  int? _previousPlayer;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +29,17 @@ class _GameScreenState extends State<GameScreen> {
             _showPlayer2Curtain = true;
           });
         }
+
+        // Show curtain after wrong guess (player switched)
+        if (state.phase == GamePhase.playing &&
+            _previousPlayer != null &&
+            _previousPlayer != state.currentPlayer) {
+          setState(() {
+            _showCurtain = true;
+          });
+        }
+
+        _previousPlayer = state.currentPlayer;
       },
       builder: (context, state) {
         // Show curtain before Player 2 selection
@@ -39,7 +51,7 @@ class _GameScreenState extends State<GameScreen> {
                 _showPlayer2Curtain = false;
               });
             },
-            title: 'Player 2\'s Turn',
+            title: 'Player 2 Turn',
             message: 'Now Player 2 will choose their person',
           );
         }
@@ -105,8 +117,8 @@ class _GameScreenState extends State<GameScreen> {
           child: Column(
             children: [
               const Text(
-                'Tap to select the person for others to guess',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'Tap to select the person for opponent to guess',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -160,7 +172,7 @@ class _GameScreenState extends State<GameScreen> {
       backgroundColor:
           state.currentPlayer == 1 ? Colors.blue.shade50 : Colors.red.shade50,
       appBar: AppBar(
-        title: Text('Player ${state.currentPlayer}\'s Turn'),
+        title: Text('Player ${state.currentPlayer} Turn'),
         backgroundColor: state.currentPlayer == 1 ? Colors.blue : Colors.red,
         actions: [
           IconButton(
@@ -239,9 +251,11 @@ class _GameScreenState extends State<GameScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        context.read<GameCubit>().toggleGuessMode();
-                      },
+                      onPressed: state.hasFlippedThisTurn
+                          ? null
+                          : () {
+                              context.read<GameCubit>().toggleGuessMode();
+                            },
                       icon:
                           Icon(isGuessMode ? Icons.cancel : Icons.help_outline),
                       label: Text(isGuessMode ? 'Cancel Guess' : 'Guess'),
