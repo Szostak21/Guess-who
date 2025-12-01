@@ -134,6 +134,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       return _DeckCard(
                         deck: deck,
                         onTap: () => _startGame(deck),
+                        onEdit: () => _editDeck(deck),
                         onDelete: () => _deleteDeck(deck.id),
                       );
                     },
@@ -185,6 +186,21 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  Future<void> _editDeck(Deck deck) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => RepositoryProvider.value(
+          value: context.read<DeckRepository>(),
+          child: DeckEditorScreen(existingDeck: deck),
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadDecks();
+    }
+  }
+
   Future<void> _deleteDeck(String deckId) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -232,12 +248,14 @@ class _MenuScreenState extends State<MenuScreen> {
 class _DeckCard extends StatelessWidget {
   final Deck deck;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _DeckCard({
     Key? key,
     required this.deck,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   }) : super(key: key);
 
@@ -293,11 +311,20 @@ class _DeckCard extends StatelessWidget {
                 ),
               ),
 
+              // Edit button
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                color: Colors.blue.shade400,
+                tooltip: 'Edit deck',
+              ),
+
               // Delete button
               IconButton(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline),
                 color: Colors.red.shade300,
+                tooltip: 'Delete deck',
               ),
 
               // Arrow

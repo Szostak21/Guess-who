@@ -24,6 +24,9 @@ class GameState extends Equatable {
   /// Whether the current player has flipped any characters this turn
   final bool hasFlippedThisTurn;
 
+  /// Set of character IDs flipped this turn (for tracking unflips)
+  final Set<String> flippedThisTurn;
+
   final PlayerBoard player1Board;
   final PlayerBoard player2Board;
 
@@ -44,6 +47,7 @@ class GameState extends Equatable {
     required this.currentPlayer,
     this.currentAction,
     this.hasFlippedThisTurn = false,
+    this.flippedThisTurn = const {},
     required this.player1Board,
     required this.player2Board,
     this.winner,
@@ -94,6 +98,7 @@ class GameState extends Equatable {
         currentPlayer,
         currentAction,
         hasFlippedThisTurn,
+        flippedThisTurn,
         player1Board,
         player2Board,
         winner,
@@ -129,6 +134,7 @@ class GameState extends Equatable {
     int? currentPlayer,
     TurnAction? currentAction,
     bool? hasFlippedThisTurn,
+    Set<String>? flippedThisTurn,
     PlayerBoard? player1Board,
     PlayerBoard? player2Board,
     int? winner,
@@ -144,6 +150,7 @@ class GameState extends Equatable {
       currentPlayer: currentPlayer ?? this.currentPlayer,
       currentAction: currentAction ?? this.currentAction,
       hasFlippedThisTurn: hasFlippedThisTurn ?? this.hasFlippedThisTurn,
+      flippedThisTurn: flippedThisTurn ?? this.flippedThisTurn,
       player1Board: player1Board ?? this.player1Board,
       player2Board: player2Board ?? this.player2Board,
       winner: winner ?? this.winner,

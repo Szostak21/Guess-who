@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math';
+import 'dart:io';
 import '../../data/models/character.dart';
 import '../../data/models/deck.dart';
 import '../../data/repositories/deck_repository.dart';
@@ -94,7 +95,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                 },
                 icon: const Icon(Icons.image),
                 label: Text(
-                  imagePath == null ? 'Add Photo (Optional)' : 'Photo Selected',
+                  imagePath == null ? 'Add Photo' : 'Photo Selected',
                 ),
               ),
               const SizedBox(height: 8),
@@ -386,8 +387,10 @@ class _CharacterEditorCard extends StatelessWidget {
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4),
                           ),
-                          child: Image.network(
-                            character.imagePath!,
+                          child: Image.file(
+                            File(character.imagePath!),
+                            width: double.infinity,
+                            height: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return const Icon(Icons.person,
