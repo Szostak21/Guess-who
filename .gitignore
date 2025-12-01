@@ -6,6 +6,22 @@
 *.swp
 .buildlog/
 .history
+.DS_Store
+
+# IDE - IntelliJ/Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.code-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 
 
