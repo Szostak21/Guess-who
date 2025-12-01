@@ -112,10 +112,10 @@ class _GameScreenState extends State<GameScreen> {
               Expanded(
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cols,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                    crossAxisCount: rows,
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
                   ),
                   itemCount: state.deck.characters.length,
                   itemBuilder: (context, index) {
@@ -193,13 +193,13 @@ class _GameScreenState extends State<GameScreen> {
             // Character grid
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(8.0),
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cols,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                    crossAxisCount: rows,
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
                   ),
                   itemCount: state.deck.characters.length,
                   itemBuilder: (context, index) {
@@ -226,7 +226,7 @@ class _GameScreenState extends State<GameScreen> {
             
             // Control buttons
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 children: [
                   Expanded(
@@ -238,11 +238,11 @@ class _GameScreenState extends State<GameScreen> {
                       label: Text(isGuessMode ? 'Cancel Guess' : 'Guess'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isGuessMode ? Colors.grey : Colors.orange,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: isGuessMode
@@ -256,7 +256,7 @@ class _GameScreenState extends State<GameScreen> {
                       icon: const Icon(Icons.navigate_next),
                       label: const Text('End Turn'),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                       ),
                     ),
                   ),

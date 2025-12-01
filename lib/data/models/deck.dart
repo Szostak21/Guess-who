@@ -35,12 +35,13 @@ class Deck extends Equatable {
   int get size => characters.length;
 
   /// Returns the dimensions for grid display (rows, columns)
-  /// For example: 9 -> (3, 3), 12 -> (3, 4), 15 -> (3, 5), 20 -> (4, 5)
+  /// Optimized for portrait mode: more rows than columns
+  /// For example: 9 -> (3, 3), 12 -> (4, 3), 15 -> (5, 3), 20 -> (5, 4)
   (int rows, int cols) get gridDimensions {
     final count = characters.length;
     
-    // Find optimal rectangle dimensions
-    for (int cols = (count / 2).ceil(); cols <= count; cols++) {
+    // Find optimal rectangle dimensions (prefer more rows for portrait)
+    for (int cols = 3; cols <= (count / 2).ceil(); cols++) {
       if (count % cols == 0) {
         return (count ~/ cols, cols);
       }
