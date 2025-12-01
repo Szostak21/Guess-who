@@ -43,7 +43,7 @@ class _GameScreenState extends State<GameScreen> {
             message: 'Now Player 2 will choose their person',
           );
         }
-        
+
         // Show curtain screen between turns
         if (_showCurtain) {
           return CurtainScreen(
@@ -111,8 +111,9 @@ class _GameScreenState extends State<GameScreen> {
               const SizedBox(height: 16),
               Expanded(
                 child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: rows,
+                    crossAxisCount: cols,
                     childAspectRatio: 0.7,
                     crossAxisSpacing: 4,
                     mainAxisSpacing: 4,
@@ -121,7 +122,7 @@ class _GameScreenState extends State<GameScreen> {
                   itemBuilder: (context, index) {
                     final character = state.deck.characters[index];
                     final characterState = playerBoard.characterStates[index];
-                    
+
                     return CharacterCard(
                       character: character,
                       state: characterState,
@@ -129,9 +130,13 @@ class _GameScreenState extends State<GameScreen> {
                       isSelected: false,
                       onTap: () {
                         if (player == 1) {
-                          context.read<GameCubit>().player1SelectCharacter(character.id);
+                          context
+                              .read<GameCubit>()
+                              .player1SelectCharacter(character.id);
                         } else {
-                          context.read<GameCubit>().player2SelectCharacter(character.id);
+                          context
+                              .read<GameCubit>()
+                              .player2SelectCharacter(character.id);
                         }
                       },
                     );
@@ -152,9 +157,8 @@ class _GameScreenState extends State<GameScreen> {
     final isGuessMode = state.currentAction == TurnAction.guessing;
 
     return Scaffold(
-      backgroundColor: state.currentPlayer == 1 
-          ? Colors.blue.shade50 
-          : Colors.red.shade50,
+      backgroundColor:
+          state.currentPlayer == 1 ? Colors.blue.shade50 : Colors.red.shade50,
       appBar: AppBar(
         title: Text('Player ${state.currentPlayer}\'s Turn'),
         backgroundColor: state.currentPlayer == 1 ? Colors.blue : Colors.red,
@@ -189,14 +193,15 @@ class _GameScreenState extends State<GameScreen> {
                 ],
               ),
             ),
-            
+
             // Character grid
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: rows,
+                    crossAxisCount: cols,
                     childAspectRatio: 0.7,
                     crossAxisSpacing: 4,
                     mainAxisSpacing: 4,
@@ -205,7 +210,7 @@ class _GameScreenState extends State<GameScreen> {
                   itemBuilder: (context, index) {
                     final character = state.deck.characters[index];
                     final characterState = currentBoard.characterStates[index];
-                    
+
                     return CharacterCard(
                       character: character,
                       state: characterState,
@@ -215,7 +220,9 @@ class _GameScreenState extends State<GameScreen> {
                             context.read<GameCubit>().makeGuess(character.id);
                           });
                         } else {
-                          context.read<GameCubit>().toggleCharacter(character.id);
+                          context
+                              .read<GameCubit>()
+                              .toggleCharacter(character.id);
                         }
                       },
                     );
@@ -223,10 +230,11 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
             ),
-            
+
             // Control buttons
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 children: [
                   Expanded(
@@ -234,10 +242,12 @@ class _GameScreenState extends State<GameScreen> {
                       onPressed: () {
                         context.read<GameCubit>().toggleGuessMode();
                       },
-                      icon: Icon(isGuessMode ? Icons.cancel : Icons.help_outline),
+                      icon:
+                          Icon(isGuessMode ? Icons.cancel : Icons.help_outline),
                       label: Text(isGuessMode ? 'Cancel Guess' : 'Guess'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isGuessMode ? Colors.grey : Colors.orange,
+                        backgroundColor:
+                            isGuessMode ? Colors.grey : Colors.orange,
                         padding: const EdgeInsets.all(12),
                       ),
                     ),
@@ -337,7 +347,8 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  void _confirmGuess(BuildContext context, String characterName, VoidCallback onConfirm) {
+  void _confirmGuess(
+      BuildContext context, String characterName, VoidCallback onConfirm) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

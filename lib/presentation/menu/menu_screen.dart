@@ -5,6 +5,7 @@ import '../../data/models/deck.dart';
 import '../../data/models/game_enums.dart';
 import '../game/cubit/game_cubit.dart';
 import '../game/screens/game_screen.dart';
+import '../deck_editor/deck_editor_screen.dart';
 
 /// Main menu screen with deck selection
 class MenuScreen extends StatefulWidget {
@@ -69,7 +70,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 ],
               ),
             ),
-            
+
             // Deck list
             Expanded(
               child: FutureBuilder<List<Deck>>(
@@ -78,7 +79,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  
+
                   if (snapshot.hasError) {
                     return Center(
                       child: Column(
@@ -91,9 +92,9 @@ class _MenuScreenState extends State<MenuScreen> {
                       ),
                     );
                   }
-                  
+
                   final decks = snapshot.data ?? [];
-                  
+
                   if (decks.isEmpty) {
                     return Center(
                       child: Column(
@@ -124,7 +125,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       ),
                     );
                   }
-                  
+
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: decks.length,
@@ -144,9 +145,19 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navigate to deck editor
-          _showComingSoon(context, 'Deck Editor');
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => RepositoryProvider.value(
+                value: context.read<DeckRepository>(),
+                child: const DeckEditorScreen(),
+              ),
+            ),
+          );
+
+          if (result == true) {
+            _loadDecks();
+          }
         },
         icon: const Icon(Icons.add),
         label: const Text('New Deck'),
@@ -163,7 +174,7 @@ class _MenuScreenState extends State<MenuScreen> {
   void _startGame(Deck deck) {
     final gameCubit = context.read<GameCubit>();
     gameCubit.startGame(deck: deck, mode: GameMode.passAndPlay);
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => BlocProvider.value(
@@ -193,7 +204,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       final repository = context.read<DeckRepository>();
       await repository.deleteDeck(deckId);
@@ -233,7 +244,7 @@ class _DeckCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (rows, cols) = deck.gridDimensions;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -258,7 +269,7 @@ class _DeckCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Info
               Expanded(
                 child: Column(
@@ -281,14 +292,14 @@ class _DeckCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Delete button
               IconButton(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline),
                 color: Colors.red.shade300,
               ),
-              
+
               // Arrow
               const Icon(Icons.chevron_right),
             ],

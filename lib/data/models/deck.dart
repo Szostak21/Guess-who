@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'dart:math';
 import 'character.dart';
 
 export 'character.dart';
@@ -35,27 +36,30 @@ class Deck extends Equatable {
   int get size => characters.length;
 
   /// Returns the dimensions for grid display (rows, columns)
-  /// Optimized for portrait mode: more rows than columns
-  /// For example: 9 -> (3, 3), 12 -> (4, 3), 15 -> (5, 3), 20 -> (5, 4)
+  /// Portrait mode: columns should always be >= rows, but as square as possible (cols - rows <= 1)
+  /// For example: 6 -> (2, 3), 9 -> (3, 3), 12 -> (3, 4), 15 -> (4, 4) partial, 20 -> (4, 5)
   (int rows, int cols) get gridDimensions {
     final count = characters.length;
-    
-    // Find optimal rectangle dimensions (prefer more rows for portrait)
-    for (int cols = 3; cols <= (count / 2).ceil(); cols++) {
-      if (count % cols == 0) {
-        return (count ~/ cols, cols);
+
+    // Find the most square-like dimensions where cols >= rows and cols - rows <= 1
+    for (int rows = (count / 2).floor(); rows >= 1; rows--) {
+      final cols = (count / rows).ceil();
+      // Ensure cols >= rows and difference is at most 1
+      if (cols >= rows && cols - rows <= 1 && rows * cols >= count) {
+        return (rows, cols);
       }
     }
-    
-    // Fallback (should not happen with valid deck sizes)
-    return ((count / 3).ceil(), 3);
+
+    // Fallback (should rarely happen)
+    final sqrtVal = sqrt(count.toDouble()).floor();
+    return (sqrtVal, (count / sqrtVal).ceil());
   }
 
   /// Validates if the deck size can form a rectangle
   bool get isValidSize {
     final count = characters.length;
     if (count < 9) return false;
-    
+
     for (int i = 2; i <= (count / 2).ceil(); i++) {
       if (count % i == 0) return true;
     }
