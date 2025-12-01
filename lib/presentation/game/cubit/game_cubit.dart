@@ -88,6 +88,7 @@ class GameCubit extends Cubit<GameState> {
       currentPlayer: player,
       currentAction: TurnAction.asking,
       hasFlippedThisTurn: false,
+      flippedThisTurn: {},
     ));
   }
 
@@ -108,17 +109,35 @@ class GameCubit extends Cubit<GameState> {
     if (state.currentAction != TurnAction.asking) return;
 
     final currentBoard = state.getBoardForPlayer(state.currentPlayer);
+    final characterState = currentBoard.characterStates
+        .firstWhere((s) => s.characterId == characterId);
     final updatedBoard = currentBoard.toggleCharacter(characterId);
+
+    // Track flipped characters this turn
+    final newFlippedSet = Set<String>.from(state.flippedThisTurn);
+
+    if (!characterState.isEliminated) {
+      // Character is being flipped to eliminated - add to set
+      newFlippedSet.add(characterId);
+    } else {
+      // Character is being unflipped - remove from set
+      newFlippedSet.remove(characterId);
+    }
+
+    // hasFlippedThisTurn is true only if there are characters in the set
+    final hasFlipped = newFlippedSet.isNotEmpty;
 
     if (state.currentPlayer == 1) {
       emit(state.copyWith(
         player1Board: updatedBoard,
-        hasFlippedThisTurn: true,
+        hasFlippedThisTurn: hasFlipped,
+        flippedThisTurn: newFlippedSet,
       ));
     } else {
       emit(state.copyWith(
         player2Board: updatedBoard,
-        hasFlippedThisTurn: true,
+        hasFlippedThisTurn: hasFlipped,
+        flippedThisTurn: newFlippedSet,
       ));
     }
   }
@@ -170,6 +189,7 @@ class GameCubit extends Cubit<GameState> {
       currentPlayer: state.nextPlayer,
       currentAction: TurnAction.asking,
       hasFlippedThisTurn: false,
+      flippedThisTurn: {},
     ));
   }
 

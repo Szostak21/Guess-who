@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:io';
 import '../../../data/models/character.dart';
 import '../../../data/models/character_state.dart';
 
@@ -106,14 +107,17 @@ class _CharacterCardState extends State<CharacterCard>
       child: Stack(
         children: [
           // Character image or placeholder
-          Center(
+          Positioned.fill(
             child: widget.character.imagePath != null
-                ? Image.asset(
-                    widget.character.imagePath!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _buildPlaceholder();
-                    },
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(widget.character.imagePath!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildPlaceholder();
+                      },
+                    ),
                   )
                 : _buildPlaceholder(),
           ),
