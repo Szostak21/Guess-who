@@ -97,6 +97,23 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                   imagePath == null ? 'Add Photo (Optional)' : 'Photo Selected',
                 ),
               ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final XFile? image = await _imagePicker.pickImage(
+                    source: ImageSource.camera,
+                    maxWidth: 800,
+                    maxHeight: 800,
+                  );
+                  if (image != null) {
+                    setState(() {
+                      imagePath = image.path;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Take Photo'),
+              ),
               if (imagePath != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
