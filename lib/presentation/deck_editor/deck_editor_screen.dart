@@ -266,7 +266,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.person_add,
-                              size: 64, color: Colors.blue),
+                              size: 64, color: Colors.blue,),
                           const SizedBox(height: 16),
                           Text(
                             'No characters yet',

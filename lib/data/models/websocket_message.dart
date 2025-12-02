@@ -12,6 +12,7 @@ enum MessageType {
   lobbyJoined,
   playerJoined,
   playerLeft,
+  startGame,
 
   // Game operations
   gameStateUpdate,

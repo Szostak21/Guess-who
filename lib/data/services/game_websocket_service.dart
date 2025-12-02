@@ -52,8 +52,10 @@ class GameWebSocketService {
               ),
               data: json['data'] as Map<String, dynamic>?,
               error: json['error'] as String?,
-              timestamp: DateTime.parse(json['timestamp'] as String? ??
-                  DateTime.now().toIso8601String(),),
+              timestamp: DateTime.parse(
+                json['timestamp'] as String? ??
+                    DateTime.now().toIso8601String(),
+              ),
             );
 
             _messageController.add(message);
@@ -124,14 +126,18 @@ class GameWebSocketService {
 
     sendMessage(data);
 
-    // Wait for lobbyJoined response
+    // Wait for lobbyJoined response or error
     final response = await messages.firstWhere(
-      (msg) => msg.type == MessageType.lobbyJoined,
+      (msg) =>
+          msg.type == MessageType.lobbyJoined || msg.type == MessageType.error,
       orElse: () => throw Exception('Failed to join lobby'),
     );
 
-    if (response.error != null) {
-      throw Exception(response.error);
+    if (response.type == MessageType.error || response.error != null) {
+      final errorMsg = response.error ??
+          response.data?['message'] ??
+          'Unknown error joining lobby';
+      throw Exception(errorMsg);
     }
 
     try {
@@ -159,7 +165,8 @@ class GameWebSocketService {
         if (deckJson['characters'] is List &&
             (deckJson['characters'] as List).isNotEmpty) {
           print(
-              'First character type: ${(deckJson['characters'] as List).first.runtimeType}',);
+            'First character type: ${(deckJson['characters'] as List).first.runtimeType}',
+          );
         }
 
         // Process images and update the deckJson in place

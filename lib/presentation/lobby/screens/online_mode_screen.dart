@@ -137,7 +137,7 @@ class _OnlineModeScreenState extends State<OnlineModeScreen> {
                       child: Row(
                         children: [
                           const Icon(Icons.wifi_tethering,
-                              size: 28, color: Colors.blue),
+                              size: 28, color: Colors.blue,),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -156,7 +156,7 @@ class _OnlineModeScreenState extends State<OnlineModeScreen> {
                                   'Create a lobby and share the code',
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey.shade600),
+                                      color: Colors.grey.shade600,),
                                 ),
                               ],
                             ),

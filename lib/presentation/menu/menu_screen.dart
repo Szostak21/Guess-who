@@ -396,7 +396,6 @@ class _DeckCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   const _DeckCard({
-    super.key,
     required this.deck,
     required this.onTap,
     required this.onEdit,

@@ -70,16 +70,23 @@ class P2PWebSocketServer {
         } else {
           // Reject additional connections
           print('REJECTING connection - lobby full');
-          channel.sink.add(jsonEncode({
-            'type': 'error',
-            'message': 'Lobby is full',
-          }),);
+          channel.sink.add(
+            jsonEncode({
+              'type': 'error',
+              'message': 'Lobby is full',
+            }),
+          );
           channel.sink.close();
         }
       });
 
-      // Start server on port 8080
-      _server = await shelf_io.serve(handler, InternetAddress.anyIPv4, 8080);
+      // Start server on port 8080 with shared: true to allow hot restart
+      _server = await shelf_io.serve(
+        handler,
+        InternetAddress.anyIPv4,
+        8080,
+        shared: true,
+      );
       print('WebSocket server started on port ${_server!.port}');
 
       return _lobby!.code;
@@ -143,9 +150,10 @@ class P2PWebSocketServer {
         case 'joinLobby':
           _handleJoinLobby(data);
           break;
-        case 'start_game':
+        case 'startGame':
           print(
-              'Server relaying start_game message from ${isHost ? "host" : "guest"}',);
+            'Server relaying startGame message from ${isHost ? "host" : "guest"}',
+          );
           _relayToOther(data, isHost: isHost);
           break;
         case 'gameStateUpdate':
@@ -169,57 +177,76 @@ class P2PWebSocketServer {
   }
 
   void _handleJoinLobby(Map<String, dynamic> data) async {
-    if (_lobby == null) return;
+    try {
+      if (_lobby == null) {
+        _sendToGuest({
+          'type': MessageType.error.name,
+          'error': 'Lobby not found',
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+        return;
+      }
 
-    final requestData = data['data'] as Map<String, dynamic>;
-    final guestId = requestData['playerId'] as String;
-    final guestName = requestData['playerName'] as String;
+      final requestData = data['data'] as Map<String, dynamic>;
+      final guestId = requestData['playerId'] as String;
+      final guestName = requestData['playerName'] as String;
 
-    // Update lobby with guest info
-    _lobby = _lobby!.copyWith(
-      guestId: guestId,
-      guestName: guestName,
-      status: LobbyStatus.ready,
-    );
+      // Update lobby with guest info
+      _lobby = _lobby!.copyWith(
+        guestId: guestId,
+        guestName: guestName,
+        status: LobbyStatus.ready,
+      );
 
-    // Convert deck with images to base64 for transfer
-    final deckWithImages =
-        await ImageTransferHelper.deckToJsonWithImages(_lobby!.deck);
+      // Convert deck with images to base64 for transfer
+      final deckWithImages =
+          await ImageTransferHelper.deckToJsonWithImages(_lobby!.deck);
 
-    // Build lobby JSON manually to ensure proper structure
-    final lobbyJson = {
-      'code': _lobby!.code,
-      'hostId': _lobby!.hostId,
-      'guestId': _lobby!.guestId,
-      'status': _lobby!.status.name,
-      'deck': deckWithImages,
-      'hostName': _lobby!.hostName,
-      'guestName': _lobby!.guestName,
-      'createdAt': _lobby!.createdAt.toIso8601String(),
-    };
+      // Build lobby JSON manually to ensure proper structure
+      final lobbyJson = {
+        'code': _lobby!.code,
+        'hostId': _lobby!.hostId,
+        'guestId': _lobby!.guestId,
+        'status': _lobby!.status.name,
+        'deck': deckWithImages,
+        'hostName': _lobby!.hostName,
+        'guestName': _lobby!.guestName,
+        'createdAt': _lobby!.createdAt.toIso8601String(),
+      };
 
-    // Send lobby info with deck to guest
-    _sendToGuest({
-      'type': MessageType.lobbyJoined.name,
-      'data': lobbyJson,
-      'timestamp': DateTime.now().toIso8601String(),
-    });
+      // Send lobby info with deck to guest
+      _sendToGuest({
+        'type': MessageType.lobbyJoined.name,
+        'data': lobbyJson,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
 
-    // Notify host that player joined
-    _sendToHost({
-      'type': MessageType.playerJoined.name,
-      'data': {
-        'playerId': guestId,
-        'playerName': guestName,
-      },
-      'timestamp': DateTime.now().toIso8601String(),
-    });
+      // Notify host that player joined
+      _sendToHost({
+        'type': MessageType.playerJoined.name,
+        'data': {
+          'playerId': guestId,
+          'playerName': guestName,
+        },
+        'timestamp': DateTime.now().toIso8601String(),
+      });
 
-    _statusController.add('Player joined: $guestName');
+      _statusController.add('Player joined: $guestName');
+    } catch (e, stackTrace) {
+      print('Error in _handleJoinLobby: $e');
+      print('Stack trace: $stackTrace');
+      _sendToGuest({
+        'type': MessageType.error.name,
+        'error': 'Failed to join lobby: $e',
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
   }
 
-  void _handleGameStateUpdate(Map<String, dynamic> data,
-      {required bool isHost,}) {
+  void _handleGameStateUpdate(
+    Map<String, dynamic> data, {
+    required bool isHost,
+  }) {
     // Store game state and relay to other player
     final stateData = data['data'] as Map<String, dynamic>?;
     if (stateData != null) {

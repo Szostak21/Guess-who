@@ -29,6 +29,7 @@ const _$MessageTypeEnumMap = {
   MessageType.lobbyJoined: 'lobbyJoined',
   MessageType.playerJoined: 'playerJoined',
   MessageType.playerLeft: 'playerLeft',
+  MessageType.startGame: 'startGame',
   MessageType.gameStateUpdate: 'gameStateUpdate',
   MessageType.characterToggled: 'characterToggled',
   MessageType.guessMade: 'guessMade',

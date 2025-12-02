@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import '../../../data/models/lobby.dart';
 import '../../../data/models/deck.dart';
+import '../../../data/models/websocket_message.dart';
 import '../../../data/services/p2p_websocket_server.dart';
 import '../../../data/services/game_websocket_service.dart';
 import 'dart:math';
@@ -54,10 +55,12 @@ class LobbyCubit extends Cubit<LobbyState> {
       final wifiIP = await info.getWifiIP();
 
       if (wifiIP == null) {
-        emit(state.copyWith(
-          status: LobbyStateStatus.error,
-          errorMessage: 'Please connect to WiFi network',
-        ),);
+        emit(
+          state.copyWith(
+            status: LobbyStateStatus.error,
+            errorMessage: 'Please connect to WiFi network',
+          ),
+        );
         return;
       }
 
@@ -82,10 +85,12 @@ class LobbyCubit extends Cubit<LobbyState> {
             status: LobbyStatus.ready,
           );
 
-          emit(state.copyWith(
-            lobby: updatedLobby,
-            status: LobbyStateStatus.ready,
-          ),);
+          emit(
+            state.copyWith(
+              lobby: updatedLobby,
+              status: LobbyStateStatus.ready,
+            ),
+          );
         }
       });
 
@@ -98,18 +103,22 @@ class LobbyCubit extends Cubit<LobbyState> {
         createdAt: DateTime.now(),
       );
 
-      emit(state.copyWith(
-        lobby: lobby,
-        playerId: playerId,
-        isHost: true,
-        status: LobbyStateStatus.waiting,
-        serverIp: wifiIP,
-      ),);
+      emit(
+        state.copyWith(
+          lobby: lobby,
+          playerId: playerId,
+          isHost: true,
+          status: LobbyStateStatus.waiting,
+          serverIp: wifiIP,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: LobbyStateStatus.error,
-        errorMessage: 'Failed to create lobby: $e',
-      ),);
+      emit(
+        state.copyWith(
+          status: LobbyStateStatus.error,
+          errorMessage: 'Failed to create lobby: $e',
+        ),
+      );
     }
   }
 
@@ -129,14 +138,17 @@ class LobbyCubit extends Cubit<LobbyState> {
 
       // Listen for start_game message from host BEFORE joining
       _wsService.messages.listen((message) {
-        print('Guest received WebSocket message: ${message.type.name}');
-        if (message.type.name == 'start_game') {
+        print('Guest received WebSocket message: ${message.type}');
+        if (message.type == MessageType.startGame) {
+          print('Guest: Received startGame message, updating state to playing');
           final updatedLobby =
               state.lobby!.copyWith(status: LobbyStatus.playing);
-          emit(state.copyWith(
-            lobby: updatedLobby,
-            status: LobbyStateStatus.playing,
-          ),);
+          emit(
+            state.copyWith(
+              lobby: updatedLobby,
+              status: LobbyStateStatus.playing,
+            ),
+          );
         }
       });
 
@@ -149,17 +161,21 @@ class LobbyCubit extends Cubit<LobbyState> {
 
       print('Guest joined lobby successfully, WebSocket connected');
 
-      emit(state.copyWith(
-        lobby: lobby,
-        playerId: playerId,
-        isHost: false,
-        status: LobbyStateStatus.ready,
-      ),);
+      emit(
+        state.copyWith(
+          lobby: lobby,
+          playerId: playerId,
+          isHost: false,
+          status: LobbyStateStatus.ready,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: LobbyStateStatus.error,
-        errorMessage: 'Failed to join lobby: $e',
-      ),);
+      emit(
+        state.copyWith(
+          status: LobbyStateStatus.error,
+          errorMessage: 'Failed to join lobby: $e',
+        ),
+      );
     }
   }
 
@@ -169,16 +185,18 @@ class LobbyCubit extends Cubit<LobbyState> {
 
     _gameInProgress = true;
     final updatedLobby = state.lobby!.copyWith(status: LobbyStatus.playing);
-    emit(state.copyWith(
-      lobby: updatedLobby,
-      status: LobbyStateStatus.playing,
-    ),);
+    emit(
+      state.copyWith(
+        lobby: updatedLobby,
+        status: LobbyStateStatus.playing,
+      ),
+    );
 
-    // Send start_game message to guest if host
+    // Send startGame message to guest if host
     if (state.isHost) {
-      print('Host sending start_game message to guest');
+      print('Host sending startGame message to guest');
       _wsService.sendMessage({
-        'type': 'start_game',
+        'type': MessageType.startGame.name,
         'lobbyCode': updatedLobby.code,
       });
     }

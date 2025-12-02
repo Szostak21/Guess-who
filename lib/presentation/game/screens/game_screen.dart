@@ -325,7 +325,7 @@ class _GameScreenState extends State<GameScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.hourglass_empty, color: Colors.blue),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Waiting for opponent to finish their turn...',
                       style: TextStyle(
