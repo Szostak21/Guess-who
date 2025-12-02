@@ -13,13 +13,13 @@ class CharacterCard extends StatefulWidget {
   final bool isSelected;
 
   const CharacterCard({
-    Key? key,
+    super.key,
     required this.character,
     required this.state,
     required this.onTap,
     this.isSelectionMode = false,
     this.isSelected = false,
-  }) : super(key: key);
+  });
 
   @override
   State<CharacterCard> createState() => _CharacterCardState();
@@ -68,12 +68,10 @@ class _CharacterCardState extends State<CharacterCard>
 
   @override
   Widget build(BuildContext context) {
-    final isEliminated = widget.state.isEliminated;
-
     return GestureDetector(
       onTap: widget.onTap,
       child: AnimatedBuilder(
-        animation: _flipAnimation,
+        animation: _controller,
         builder: (context, child) {
           // Calculate the angle for 3D rotation
           final angle = _flipAnimation.value;
@@ -98,7 +96,7 @@ class _CharacterCardState extends State<CharacterCard>
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: widget.isSelected ? Colors.green : Colors.grey.shade400,
+          color: widget.isSelected ? Colors.blue : Colors.grey.shade400,
           width: widget.isSelected ? 3 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -149,12 +147,12 @@ class _CharacterCardState extends State<CharacterCard>
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.3),
+                  color: Colors.blue.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.check_circle,
-                  color: Colors.green,
+                  color: Colors.blue,
                   size: 48,
                 ),
               ),

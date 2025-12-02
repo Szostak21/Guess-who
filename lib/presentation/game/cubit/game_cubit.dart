@@ -1,15 +1,106 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../data/models/game_state.dart';
 import '../../../data/models/game_enums.dart';
 import '../../../data/models/deck.dart';
+import '../../../data/services/local_lobby_manager.dart';
+import '../../../data/services/game_websocket_service.dart';
+import '../../../data/models/websocket_message.dart';
 
 part 'game_event.dart';
 
 /// Game Cubit manages all game logic in a network-agnostic way.
 /// It can be used for both Pass & Play and Online multiplayer.
 class GameCubit extends Cubit<GameState> {
-  GameCubit() : super(_initialState());
+  // ignore: unused_field
+  final LocalLobbyManager? _lobbyManager;
+  final GameWebSocketService? _wsService;
+  StreamSubscription<WebSocketMessage>? _wsSubscription;
+
+  // ignore: unused_field
+  String? _lobbyCode;
+  String? _playerId;
+  bool _isHost = false;
+
+  GameCubit({
+    LocalLobbyManager? lobbyManager,
+    GameWebSocketService? wsService,
+  })  : _lobbyManager = lobbyManager,
+        _wsService = wsService,
+        super(_initialState()) {
+    // Listen to WebSocket messages if in online mode
+    if (_wsService != null) {
+      _wsSubscription = _wsService.messages.listen(_handleWebSocketMessage);
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _wsSubscription?.cancel();
+    return super.close();
+  }
+
+  /// Get the player number for this device (1 if host, 2 if guest)
+  /// Returns null for Pass & Play mode
+  int? get myPlayerNumber {
+    if (state.mode == GameMode.passAndPlay) return null;
+    return _isHost ? 1 : 2;
+  }
+
+  /// Check if this device is the host
+  bool get isHost => _isHost;
+
+  /// Get the player ID for this device
+  String? get playerId => _playerId;
+
+  /// Handle incoming WebSocket messages
+  void _handleWebSocketMessage(WebSocketMessage message) {
+    final data = message.data;
+    if (data == null) return;
+
+    try {
+      switch (message.type) {
+        case MessageType.gameStateUpdate:
+          // Partial game state update - preserve local deck with images
+          final gameStateJson = data['gameState'] as Map<String, dynamic>;
+
+          // Parse the incoming state (with the host's deck)
+          final incomingState = GameState.fromJson(gameStateJson);
+
+          // Apply the update but keep our local deck to preserve image paths
+          emit(
+            incomingState.copyWith(
+              deck: state.deck, // Keep local deck with image paths
+            ),
+          );
+          break;
+
+        default:
+          break;
+      }
+    } catch (e) {
+      print('Error handling WebSocket message: $e');
+    }
+  }
+
+  /// Send game state update to opponent via WebSocket
+  void _sendStateUpdate() {
+    if (state.mode != GameMode.online || _wsService == null) return;
+
+    try {
+      _wsService.sendMessage({
+        'type': 'gameStateUpdate',
+        'data': {
+          'gameState': state.toJson(),
+          'lobbyCode': _lobbyCode,
+        },
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print('Error sending state update: $e');
+    }
+  }
 
   static GameState _initialState() {
     final now = DateTime.now();
@@ -31,51 +122,114 @@ class GameCubit extends Cubit<GameState> {
   void startGame({
     required Deck deck,
     required GameMode mode,
+    String? lobbyCode,
+    String? playerId,
+    bool isHost = false,
   }) {
     final gameId = DateTime.now().millisecondsSinceEpoch.toString();
-    emit(GameState.initial(
-      gameId: gameId,
-      deck: deck,
-      mode: mode,
-    ));
+
+    // Store online mode info
+    _lobbyCode = lobbyCode;
+    _playerId = playerId;
+    _isHost = isHost;
+
+    emit(
+      GameState.initial(
+        gameId: gameId,
+        deck: deck,
+        mode: mode,
+      ),
+    );
   }
 
   /// Transition from setup to player 1 character selection
   void beginCharacterSelection() {
     if (state.phase != GamePhase.setup) return;
 
-    emit(state.copyWith(phase: GamePhase.player1Selection));
+    if (state.mode == GameMode.online) {
+      emit(state.copyWith(phase: GamePhase.characterSelection));
+    } else {
+      emit(state.copyWith(phase: GamePhase.player1Selection));
+    }
   }
 
   /// Player 1 selects their secret character
   void player1SelectCharacter(String characterId) {
-    if (state.phase != GamePhase.player1Selection) return;
+    final isSimultaneous = state.phase == GamePhase.characterSelection;
+    if (!isSimultaneous && state.phase != GamePhase.player1Selection) return;
+
+    // Prevent re-selection during simultaneous flow
+    if (isSimultaneous && state.player1Board.secretCharacterId != null) return;
 
     final updatedBoard = state.player1Board.copyWith(
       secretCharacterId: characterId,
     );
 
-    emit(state.copyWith(
-      player1Board: updatedBoard,
-      phase: GamePhase.player2Selection,
-    ));
+    if (isSimultaneous) {
+      final bothSelected = state.player2Board.secretCharacterId != null;
+
+      emit(
+        state.copyWith(
+          player1Board: updatedBoard,
+          phase:
+              bothSelected ? GamePhase.playing : GamePhase.characterSelection,
+          currentPlayer: bothSelected ? 1 : state.currentPlayer,
+          currentAction: bothSelected ? TurnAction.asking : state.currentAction,
+          hasFlippedThisTurn: false,
+          flippedThisTurn: {},
+        ),
+      );
+    } else {
+      emit(
+        state.copyWith(
+          player1Board: updatedBoard,
+          phase: GamePhase.player2Selection,
+        ),
+      );
+    }
+
+    _sendStateUpdate();
   }
 
   /// Player 2 selects their secret character
   void player2SelectCharacter(String characterId) {
-    if (state.phase != GamePhase.player2Selection) return;
+    final isSimultaneous = state.phase == GamePhase.characterSelection;
+    if (!isSimultaneous && state.phase != GamePhase.player2Selection) return;
+
+    if (isSimultaneous && state.player2Board.secretCharacterId != null) return;
 
     final updatedBoard = state.player2Board.copyWith(
       secretCharacterId: characterId,
     );
 
-    // Both players ready, start the game
-    emit(state.copyWith(
-      player2Board: updatedBoard,
-      phase: GamePhase.playing,
-      currentPlayer: 1,
-      currentAction: TurnAction.asking,
-    ));
+    if (isSimultaneous) {
+      final bothSelected = state.player1Board.secretCharacterId != null;
+
+      emit(
+        state.copyWith(
+          player2Board: updatedBoard,
+          phase:
+              bothSelected ? GamePhase.playing : GamePhase.characterSelection,
+          currentPlayer: bothSelected ? 1 : state.currentPlayer,
+          currentAction: bothSelected ? TurnAction.asking : state.currentAction,
+          hasFlippedThisTurn: false,
+          flippedThisTurn: {},
+        ),
+      );
+    } else {
+      emit(
+        state.copyWith(
+          player2Board: updatedBoard,
+          phase: GamePhase.playing,
+          currentPlayer: 1,
+          currentAction: TurnAction.asking,
+          hasFlippedThisTurn: false,
+          flippedThisTurn: {},
+        ),
+      );
+    }
+
+    _sendStateUpdate();
   }
 
   /// Start a player's turn (called after curtain screen)
@@ -84,12 +238,14 @@ class GameCubit extends Cubit<GameState> {
     if (state.currentPlayer != player) return;
 
     // Reset flipped state for new turn
-    emit(state.copyWith(
-      currentPlayer: player,
-      currentAction: TurnAction.asking,
-      hasFlippedThisTurn: false,
-      flippedThisTurn: {},
-    ));
+    emit(
+      state.copyWith(
+        currentPlayer: player,
+        currentAction: TurnAction.asking,
+        hasFlippedThisTurn: false,
+        flippedThisTurn: {},
+      ),
+    );
   }
 
   /// Toggle between asking and guessing mode
@@ -128,18 +284,24 @@ class GameCubit extends Cubit<GameState> {
     final hasFlipped = newFlippedSet.isNotEmpty;
 
     if (state.currentPlayer == 1) {
-      emit(state.copyWith(
-        player1Board: updatedBoard,
-        hasFlippedThisTurn: hasFlipped,
-        flippedThisTurn: newFlippedSet,
-      ));
+      emit(
+        state.copyWith(
+          player1Board: updatedBoard,
+          hasFlippedThisTurn: hasFlipped,
+          flippedThisTurn: newFlippedSet,
+        ),
+      );
     } else {
-      emit(state.copyWith(
-        player2Board: updatedBoard,
-        hasFlippedThisTurn: hasFlipped,
-        flippedThisTurn: newFlippedSet,
-      ));
+      emit(
+        state.copyWith(
+          player2Board: updatedBoard,
+          hasFlippedThisTurn: hasFlipped,
+          flippedThisTurn: newFlippedSet,
+        ),
+      );
     }
+
+    _sendStateUpdate();
   }
 
   /// Make a guess (player taps on a character in guess mode)
@@ -159,19 +321,25 @@ class GameCubit extends Cubit<GameState> {
       final updatedBoard = currentBoard.eliminateCharacter(guessedCharacterId);
 
       if (state.currentPlayer == 1) {
-        emit(state.copyWith(
-          player1Board: updatedBoard,
-          currentPlayer: state.nextPlayer,
-          currentAction: TurnAction.asking,
-        ));
+        emit(
+          state.copyWith(
+            player1Board: updatedBoard,
+            currentPlayer: state.nextPlayer,
+            currentAction: TurnAction.asking,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          player2Board: updatedBoard,
-          currentPlayer: state.nextPlayer,
-          currentAction: TurnAction.asking,
-        ));
+        emit(
+          state.copyWith(
+            player2Board: updatedBoard,
+            currentPlayer: state.nextPlayer,
+            currentAction: TurnAction.asking,
+          ),
+        );
       }
     }
+
+    _sendStateUpdate();
   }
 
   /// End the current player's turn (after asking questions)
@@ -179,30 +347,41 @@ class GameCubit extends Cubit<GameState> {
     if (state.phase != GamePhase.playing) return;
     if (state.currentAction != TurnAction.asking) return;
 
-    final opponentBoard = state.getOpponentBoard(state.currentPlayer);
+    emit(
+      state.copyWith(
+        currentPlayer: state.nextPlayer,
+        currentAction: TurnAction.asking,
+        hasFlippedThisTurn: false,
+        flippedThisTurn: {},
+      ),
+    );
 
-    // Check if opponent has only 1 character left
-    // If so, the current player MUST guess on their next turn
-    // But for now, we just switch turns
+    _sendStateUpdate();
+  }
 
-    emit(state.copyWith(
-      currentPlayer: state.nextPlayer,
-      currentAction: TurnAction.asking,
-      hasFlippedThisTurn: false,
-      flippedThisTurn: {},
-    ));
+  /// Forfeit the game (used when a player leaves in online mode)
+  void forfeitGame({required int losingPlayer}) {
+    if (state.mode != GameMode.online) return;
+    if (state.phase == GamePhase.finished) return;
+
+    final winner = losingPlayer == 1 ? 2 : 1;
+    _endGame(winner: winner);
   }
 
   /// End the game with a winner
   void _endGame({required int winner}) {
     final result = winner == 1 ? GameResult.player1Won : GameResult.player2Won;
 
-    emit(state.copyWith(
-      phase: GamePhase.finished,
-      winner: winner,
-      result: result,
-      finishedAt: DateTime.now(),
-    ));
+    emit(
+      state.copyWith(
+        phase: GamePhase.finished,
+        winner: winner,
+        result: result,
+        finishedAt: DateTime.now(),
+      ),
+    );
+
+    _sendStateUpdate();
   }
 
   /// Reset the game (return to menu)

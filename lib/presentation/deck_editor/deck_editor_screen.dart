@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math';
 import 'dart:io';
-import '../../data/models/character.dart';
 import '../../data/models/deck.dart';
 import '../../data/repositories/deck_repository.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,7 +10,7 @@ import 'package:image_picker/image_picker.dart';
 class DeckEditorScreen extends StatefulWidget {
   final Deck? existingDeck;
 
-  const DeckEditorScreen({Key? key, this.existingDeck}) : super(key: key);
+  const DeckEditorScreen({super.key, this.existingDeck});
 
   @override
   State<DeckEditorScreen> createState() => _DeckEditorScreenState();
@@ -150,11 +149,13 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
 
     if (result == true && nameController.text.trim().isNotEmpty) {
       setState(() {
-        _characters.add(Character(
-          id: 'char_${DateTime.now().millisecondsSinceEpoch}',
-          name: nameController.text.trim(),
-          imagePath: imagePath,
-        ));
+        _characters.add(
+          Character(
+            id: 'char_${DateTime.now().millisecondsSinceEpoch}',
+            name: nameController.text.trim(),
+            imagePath: imagePath,
+          ),
+        );
       });
     }
   }
@@ -168,7 +169,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
   Future<void> _saveDeck() async {
     if (_characters.length < _minCharacters) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Add at least $_minCharacters characters'),
           backgroundColor: Colors.orange,
         ),
@@ -218,7 +219,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
             border: InputBorder.none,
           ),
         ),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.blue,
         actions: [
           TextButton.icon(
             onPressed: _saveDeck,
@@ -233,7 +234,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
             // Info bar
             Container(
               padding: const EdgeInsets.all(12),
-              color: Colors.deepPurple.shade50,
+              color: Colors.blue.shade50,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -247,8 +248,8 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                         : '✓ Ready to save',
                     style: TextStyle(
                       color: _characters.length < _minCharacters
-                          ? Colors.orange
-                          : Colors.green,
+                          ? Colors.grey.shade600
+                          : Colors.blue,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -263,8 +264,8 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.person_add,
-                              size: 64, color: Colors.grey.shade400),
+                          const Icon(Icons.person_add,
+                              size: 64, color: Colors.blue,),
                           const SizedBox(height: 16),
                           Text(
                             'No characters yet',
@@ -276,7 +277,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'Tap + to add characters',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: Colors.grey.shade600),
                           ),
                         ],
                       ),
@@ -339,7 +340,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                     style: const TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
+                    backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.all(12),
                     disabledBackgroundColor: Colors.grey,
@@ -393,8 +394,11 @@ class _CharacterEditorCard extends StatelessWidget {
                             height: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.person,
-                                  size: 48, color: Colors.grey);
+                              return const Icon(
+                                Icons.person,
+                                size: 48,
+                                color: Colors.grey,
+                              );
                             },
                           ),
                         )

@@ -26,9 +26,9 @@ class GuessWhoApp extends StatelessWidget {
   final DeckRepository deckRepository;
 
   const GuessWhoApp({
-    Key? key,
+    super.key,
     required this.deckRepository,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

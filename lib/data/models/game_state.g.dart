@@ -15,6 +15,10 @@ GameState _$GameStateFromJson(Map<String, dynamic> json) => GameState(
       currentAction:
           $enumDecodeNullable(_$TurnActionEnumMap, json['currentAction']),
       hasFlippedThisTurn: json['hasFlippedThisTurn'] as bool? ?? false,
+      flippedThisTurn: (json['flippedThisTurn'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toSet() ??
+          const {},
       player1Board:
           PlayerBoard.fromJson(json['player1Board'] as Map<String, dynamic>),
       player2Board:
@@ -35,6 +39,7 @@ Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
       'currentPlayer': instance.currentPlayer,
       'currentAction': _$TurnActionEnumMap[instance.currentAction],
       'hasFlippedThisTurn': instance.hasFlippedThisTurn,
+      'flippedThisTurn': instance.flippedThisTurn.toList(),
       'player1Board': instance.player1Board,
       'player2Board': instance.player2Board,
       'winner': instance.winner,
@@ -50,6 +55,7 @@ const _$GameModeEnumMap = {
 
 const _$GamePhaseEnumMap = {
   GamePhase.setup: 'setup',
+  GamePhase.characterSelection: 'characterSelection',
   GamePhase.player1Selection: 'player1Selection',
   GamePhase.player2Selection: 'player2Selection',
   GamePhase.playing: 'playing',
