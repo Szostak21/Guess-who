@@ -5,6 +5,7 @@ import '../../../data/models/game_state.dart';
 import '../../../data/models/game_enums.dart';
 import '../widgets/character_card.dart';
 import '../widgets/curtain_screen.dart';
+import '../../lobby/cubit/lobby_cubit.dart';
 
 /// Main game screen that handles all game phases
 class GameScreen extends StatefulWidget {
@@ -24,9 +25,42 @@ class _GameScreenState extends State<GameScreen> {
     final gameCubit = context.read<GameCubit>();
     final isOnlineMode = gameCubit.state.mode == GameMode.online;
     final myPlayerNumber = gameCubit.myPlayerNumber;
+    final isHost = gameCubit.isHost;
 
     return BlocConsumer<GameCubit, GameState>(
       listener: (context, state) {
+        // Auto-exit to menu when game finishes
+        if (state.phase == GamePhase.finished) {
+          // Delay briefly to show winner screen
+          Future.delayed(const Duration(seconds: 3), () {
+            if (!context.mounted) return;
+
+            // Cleanup and navigate back
+            context.read<GameCubit>().resetGame();
+
+            // If in online mode, cleanup lobby connections
+            try {
+              context.read<LobbyCubit>().endGame();
+            } catch (e) {
+              // LobbyCubit not found - we're in Pass & Play mode, ignore
+            }
+
+            // Pop back to main menu
+            if (isOnlineMode) {
+              // Host: Menu → Online Mode → Create Lobby → Game (pop 3 times)
+              // Guest: Menu → Join Lobby → Game (pop 2 times)
+              Navigator.of(context).pop(); // Pop game screen
+              Navigator.of(context).pop(); // Pop lobby screen
+              if (isHost) {
+                Navigator.of(context)
+                    .pop(); // Pop online mode screen (host only)
+              }
+            } else {
+              Navigator.of(context).pop(); // Pop game screen (Pass & Play)
+            }
+          });
+        }
+
         // In Pass & Play mode, show curtains between phases and turns
         if (!isOnlineMode) {
           // Show curtain after Player 1 selects, before Player 2 selects
@@ -189,6 +223,11 @@ class _GameScreenState extends State<GameScreen> {
     GameState state,
     int player,
   ) {
+    // Safety check: Don't render if deck is empty (can happen during cleanup)
+    if (state.deck.characters.isEmpty) {
+      return _buildWaitingScreen(context, state, 'Loading...');
+    }
+
     final playerBoard = state.getBoardForPlayer(player);
     final (rows, cols) = state.deck.gridDimensions;
 
@@ -259,6 +298,11 @@ class _GameScreenState extends State<GameScreen> {
     bool isOnlineMode,
     int? myPlayerNumber,
   ) {
+    // Safety check: Don't render if deck is empty (can happen during cleanup)
+    if (state.deck.characters.isEmpty) {
+      return _buildWaitingScreen(context, state, 'Loading...');
+    }
+
     // In online mode, determine whose board to show
     final displayPlayer = isOnlineMode && myPlayerNumber != null
         ? myPlayerNumber
@@ -436,6 +480,29 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildFinishedScreen(BuildContext context, GameState state) {
+    // Get winner's name
+    String winnerName;
+    final gameCubit = context.read<GameCubit>();
+
+    if (gameCubit.state.mode == GameMode.online) {
+      // Try to get player names from lobby
+      try {
+        final lobby = context.read<LobbyCubit>().state.lobby;
+        if (lobby != null) {
+          winnerName = state.winner == 1
+              ? lobby.hostName
+              : (lobby.guestName ?? 'Player 2');
+        } else {
+          winnerName = 'Player ${state.winner}';
+        }
+      } catch (e) {
+        winnerName = 'Player ${state.winner}';
+      }
+    } else {
+      // Pass & Play mode - use generic player numbers
+      winnerName = 'Player ${state.winner}';
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Game Over')),
       body: Center(
@@ -449,19 +516,21 @@ class _GameScreenState extends State<GameScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              'Player ${state.winner} Wins!',
+              '$winnerName Wins!',
               style: const TextStyle(
                 fontSize: 42,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: () {
-                context.read<GameCubit>().resetGame();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Back to Menu'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 24),
+            Text(
+              'Returning to menu...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+              ),
             ),
           ],
         ),

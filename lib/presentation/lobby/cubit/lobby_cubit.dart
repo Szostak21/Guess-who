@@ -91,6 +91,20 @@ class LobbyCubit extends Cubit<LobbyState> {
               status: LobbyStateStatus.ready,
             ),
           );
+        } else if (message.type == MessageType.playerLeft) {
+          print('Host: Guest left, resetting lobby to waiting');
+          final updatedLobby = state.lobby!.copyWith(
+            guestId: null,
+            guestName: null,
+            status: LobbyStatus.waiting,
+          );
+
+          emit(
+            state.copyWith(
+              lobby: updatedLobby,
+              status: LobbyStateStatus.waiting,
+            ),
+          );
         }
       });
 

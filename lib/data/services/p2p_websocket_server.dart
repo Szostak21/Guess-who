@@ -127,6 +127,19 @@ class P2PWebSocketServer {
       onDone: () {
         print('Guest disconnected');
         _statusController.add('Guest disconnected');
+
+        // Clear guest channel reference so new players can join
+        _guestChannel = null;
+
+        // Reset lobby to waiting state
+        if (_lobby != null) {
+          _lobby = _lobby!.copyWith(
+            guestId: null,
+            guestName: null,
+            status: LobbyStatus.waiting,
+          );
+        }
+
         // Notify host that guest left
         _sendToHost({
           'type': MessageType.playerLeft.name,
