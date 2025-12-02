@@ -62,10 +62,16 @@ class GameCubit extends Cubit<GameState> {
     try {
       switch (message.type) {
         case MessageType.gameStateUpdate:
-          // Full game state update
+          // Partial game state update - preserve local deck with images
           final gameStateJson = data['gameState'] as Map<String, dynamic>;
-          final newState = GameState.fromJson(gameStateJson);
-          emit(newState);
+
+          // Parse the incoming state (with the host's deck)
+          final incomingState = GameState.fromJson(gameStateJson);
+
+          // Apply the update but keep our local deck to preserve image paths
+          emit(incomingState.copyWith(
+            deck: state.deck, // Keep local deck with image paths
+          ));
           break;
 
         default:
@@ -125,11 +131,13 @@ class GameCubit extends Cubit<GameState> {
     _playerId = playerId;
     _isHost = isHost;
 
-    emit(GameState.initial(
-      gameId: gameId,
-      deck: deck,
-      mode: mode,
-    ),);
+    emit(
+      GameState.initial(
+        gameId: gameId,
+        deck: deck,
+        mode: mode,
+      ),
+    );
   }
 
   /// Transition from setup to player 1 character selection
@@ -147,10 +155,12 @@ class GameCubit extends Cubit<GameState> {
       secretCharacterId: characterId,
     );
 
-    emit(state.copyWith(
-      player1Board: updatedBoard,
-      phase: GamePhase.player2Selection,
-    ),);
+    emit(
+      state.copyWith(
+        player1Board: updatedBoard,
+        phase: GamePhase.player2Selection,
+      ),
+    );
 
     _sendStateUpdate();
   }
@@ -164,12 +174,14 @@ class GameCubit extends Cubit<GameState> {
     );
 
     // Both players ready, start the game
-    emit(state.copyWith(
-      player2Board: updatedBoard,
-      phase: GamePhase.playing,
-      currentPlayer: 1,
-      currentAction: TurnAction.asking,
-    ),);
+    emit(
+      state.copyWith(
+        player2Board: updatedBoard,
+        phase: GamePhase.playing,
+        currentPlayer: 1,
+        currentAction: TurnAction.asking,
+      ),
+    );
 
     _sendStateUpdate();
   }
@@ -180,12 +192,14 @@ class GameCubit extends Cubit<GameState> {
     if (state.currentPlayer != player) return;
 
     // Reset flipped state for new turn
-    emit(state.copyWith(
-      currentPlayer: player,
-      currentAction: TurnAction.asking,
-      hasFlippedThisTurn: false,
-      flippedThisTurn: {},
-    ),);
+    emit(
+      state.copyWith(
+        currentPlayer: player,
+        currentAction: TurnAction.asking,
+        hasFlippedThisTurn: false,
+        flippedThisTurn: {},
+      ),
+    );
   }
 
   /// Toggle between asking and guessing mode
@@ -224,17 +238,21 @@ class GameCubit extends Cubit<GameState> {
     final hasFlipped = newFlippedSet.isNotEmpty;
 
     if (state.currentPlayer == 1) {
-      emit(state.copyWith(
-        player1Board: updatedBoard,
-        hasFlippedThisTurn: hasFlipped,
-        flippedThisTurn: newFlippedSet,
-      ),);
+      emit(
+        state.copyWith(
+          player1Board: updatedBoard,
+          hasFlippedThisTurn: hasFlipped,
+          flippedThisTurn: newFlippedSet,
+        ),
+      );
     } else {
-      emit(state.copyWith(
-        player2Board: updatedBoard,
-        hasFlippedThisTurn: hasFlipped,
-        flippedThisTurn: newFlippedSet,
-      ),);
+      emit(
+        state.copyWith(
+          player2Board: updatedBoard,
+          hasFlippedThisTurn: hasFlipped,
+          flippedThisTurn: newFlippedSet,
+        ),
+      );
     }
 
     _sendStateUpdate();
@@ -257,17 +275,21 @@ class GameCubit extends Cubit<GameState> {
       final updatedBoard = currentBoard.eliminateCharacter(guessedCharacterId);
 
       if (state.currentPlayer == 1) {
-        emit(state.copyWith(
-          player1Board: updatedBoard,
-          currentPlayer: state.nextPlayer,
-          currentAction: TurnAction.asking,
-        ),);
+        emit(
+          state.copyWith(
+            player1Board: updatedBoard,
+            currentPlayer: state.nextPlayer,
+            currentAction: TurnAction.asking,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          player2Board: updatedBoard,
-          currentPlayer: state.nextPlayer,
-          currentAction: TurnAction.asking,
-        ),);
+        emit(
+          state.copyWith(
+            player2Board: updatedBoard,
+            currentPlayer: state.nextPlayer,
+            currentAction: TurnAction.asking,
+          ),
+        );
       }
     }
 
@@ -279,12 +301,14 @@ class GameCubit extends Cubit<GameState> {
     if (state.phase != GamePhase.playing) return;
     if (state.currentAction != TurnAction.asking) return;
 
-    emit(state.copyWith(
-      currentPlayer: state.nextPlayer,
-      currentAction: TurnAction.asking,
-      hasFlippedThisTurn: false,
-      flippedThisTurn: {},
-    ),);
+    emit(
+      state.copyWith(
+        currentPlayer: state.nextPlayer,
+        currentAction: TurnAction.asking,
+        hasFlippedThisTurn: false,
+        flippedThisTurn: {},
+      ),
+    );
 
     _sendStateUpdate();
   }
@@ -293,12 +317,14 @@ class GameCubit extends Cubit<GameState> {
   void _endGame({required int winner}) {
     final result = winner == 1 ? GameResult.player1Won : GameResult.player2Won;
 
-    emit(state.copyWith(
-      phase: GamePhase.finished,
-      winner: winner,
-      result: result,
-      finishedAt: DateTime.now(),
-    ),);
+    emit(
+      state.copyWith(
+        phase: GamePhase.finished,
+        winner: winner,
+        result: result,
+        finishedAt: DateTime.now(),
+      ),
+    );
 
     _sendStateUpdate();
   }
