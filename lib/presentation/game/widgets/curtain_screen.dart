@@ -8,12 +8,12 @@ class CurtainScreen extends StatelessWidget {
   final String? message;
 
   const CurtainScreen({
-    Key? key,
+    super.key,
     required this.nextPlayer,
     required this.onContinue,
     this.title,
     this.message,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

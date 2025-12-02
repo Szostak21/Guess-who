@@ -21,6 +21,12 @@ dependencies:
   # Image Handling
   image_picker: ^1.0.4
   
+  # WebSocket Communication
+  web_socket_channel: ^2.4.0
+  shelf: ^1.4.1
+  shelf_web_socket: ^1.0.4
+  network_info_plus: ^5.0.0
+  
   # JSON Serialization
   json_annotation: ^4.8.1
   

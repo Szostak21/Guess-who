@@ -6,10 +6,13 @@ import '../../data/models/game_enums.dart';
 import '../game/cubit/game_cubit.dart';
 import '../game/screens/game_screen.dart';
 import '../deck_editor/deck_editor_screen.dart';
+import '../lobby/screens/online_mode_screen.dart';
+import '../lobby/screens/join_lobby_screen.dart';
+import '../lobby/cubit/lobby_cubit.dart';
 
 /// Main menu screen with deck selection
 class MenuScreen extends StatefulWidget {
-  const MenuScreen({Key? key}) : super(key: key);
+  const MenuScreen({super.key});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -43,15 +46,15 @@ class _MenuScreenState extends State<MenuScreen> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Column(
                 children: [
                   const Icon(
                     Icons.people,
-                    size: 80,
+                    size: 64,
                     color: Colors.blue,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const Text(
                     'Guess Who?',
                     style: TextStyle(
@@ -100,10 +103,10 @@ class _MenuScreenState extends State<MenuScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.style,
                             size: 64,
-                            color: Colors.grey.shade400,
+                            color: Colors.blue,
                           ),
                           const SizedBox(height: 16),
                           const Text(
@@ -114,7 +117,10 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text('Create your first deck to start playing'),
+                          Text(
+                            'Create your first deck to start playing',
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
                           const SizedBox(height: 24),
                           ElevatedButton.icon(
                             onPressed: () => _createDefaultDeck(),
@@ -145,23 +151,78 @@ class _MenuScreenState extends State<MenuScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => RepositoryProvider.value(
-                value: context.read<DeckRepository>(),
-                child: const DeckEditorScreen(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Join Lobby button (bottom left) as Card to match online mode style
+            Card(
+              elevation: 2,
+              child: InkWell(
+                onTap: _joinLobby,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.wifi, size: 20, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text(
+                        'Join Lobby',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          );
 
-          if (result == true) {
-            _loadDecks();
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('New Deck'),
+            // New Deck button (bottom right) as Card to match online mode style
+            Card(
+              elevation: 2,
+              child: InkWell(
+                onTap: () async {
+                  final result = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => RepositoryProvider.value(
+                        value: context.read<DeckRepository>(),
+                        child: const DeckEditorScreen(),
+                      ),
+                    ),
+                  );
+
+                  if (result == true) {
+                    _loadDecks();
+                  }
+                },
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 20, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text(
+                        'New Deck',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -173,6 +234,49 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   void _startGame(Deck deck) {
+    _showModeSelection(deck);
+  }
+
+  void _showModeSelection(Deck deck) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Game Mode'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.people, color: Colors.blue),
+              title: const Text('Pass & Play'),
+              subtitle: Text(
+                'Play on the same device',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              onTap: () {
+                Navigator.of(context).pop();
+                _startPassAndPlay(deck);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.wifi, color: Colors.blue),
+              title: const Text('Online'),
+              subtitle: Text(
+                'Play with a friend over WiFi',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              onTap: () {
+                Navigator.of(context).pop();
+                _startOnlineMode(deck);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _startPassAndPlay(Deck deck) {
     final gameCubit = context.read<GameCubit>();
     gameCubit.startGame(deck: deck, mode: GameMode.passAndPlay);
 
@@ -181,6 +285,17 @@ class _MenuScreenState extends State<MenuScreen> {
         builder: (context) => BlocProvider.value(
           value: gameCubit,
           child: const GameScreen(),
+        ),
+      ),
+    );
+  }
+
+  void _startOnlineMode(Deck deck) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: context.read<GameCubit>(),
+          child: OnlineModeScreen(deck: deck),
         ),
       ),
     );
@@ -228,20 +343,49 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
-  void _showComingSoon(BuildContext context, String feature) {
-    showDialog(
+  void _joinLobby() async {
+    final nameController = TextEditingController();
+    final playerName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Coming Soon'),
-        content: Text('$feature will be available in the next update!'),
+        title: const Text('Enter Your Name'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            hintText: 'Player name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.trim().isNotEmpty) {
+                Navigator.of(context).pop(nameController.text.trim());
+              }
+            },
+            child: const Text('Continue'),
           ),
         ],
       ),
     );
+
+    if (playerName != null && playerName.isNotEmpty) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (context) => LobbyCubit(),
+            child: JoinLobbyScreen(playerName: playerName),
+          ),
+        ),
+      );
+    }
   }
 }
 
@@ -252,12 +396,12 @@ class _DeckCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   const _DeckCard({
-    Key? key,
+    super.key,
     required this.deck,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
