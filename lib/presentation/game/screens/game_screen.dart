@@ -27,183 +27,193 @@ class _GameScreenState extends State<GameScreen> {
     final myPlayerNumber = gameCubit.myPlayerNumber;
     final isHost = gameCubit.isHost;
 
-    return BlocConsumer<GameCubit, GameState>(
-      listener: (context, state) {
-        // Auto-exit to menu when game finishes
-        if (state.phase == GamePhase.finished) {
-          // Delay briefly to show winner screen
-          Future.delayed(const Duration(seconds: 3), () {
-            if (!context.mounted) return;
+    return WillPopScope(
+      onWillPop: () => _handleBackNavigation(context, isOnlineMode),
+      child: BlocConsumer<GameCubit, GameState>(
+        listener: (context, state) {
+          // Auto-exit to menu when game finishes
+          if (state.phase == GamePhase.finished) {
+            // Delay briefly to show winner screen
+            Future.delayed(const Duration(seconds: 3), () {
+              if (!context.mounted) return;
 
-            // Cleanup and navigate back
-            context.read<GameCubit>().resetGame();
+              // Cleanup and navigate back
+              context.read<GameCubit>().resetGame();
 
-            // If in online mode, cleanup lobby connections
-            try {
-              context.read<LobbyCubit>().endGame();
-            } catch (e) {
-              // LobbyCubit not found - we're in Pass & Play mode, ignore
-            }
-
-            // Pop back to main menu
-            if (isOnlineMode) {
-              // Host: Menu → Online Mode → Create Lobby → Game (pop 3 times)
-              // Guest: Menu → Join Lobby → Game (pop 2 times)
-              Navigator.of(context).pop(); // Pop game screen
-              Navigator.of(context).pop(); // Pop lobby screen
-              if (isHost) {
-                Navigator.of(context)
-                    .pop(); // Pop online mode screen (host only)
+              // If in online mode, cleanup lobby connections
+              try {
+                context.read<LobbyCubit>().endGame();
+              } catch (e) {
+                // LobbyCubit not found - we're in Pass & Play mode, ignore
               }
-            } else {
-              Navigator.of(context).pop(); // Pop game screen (Pass & Play)
+
+              // Pop back to main menu
+              if (isOnlineMode) {
+                // Host: Menu → Online Mode → Create Lobby → Game (pop 3 times)
+                // Guest: Menu → Join Lobby → Game (pop 2 times)
+                Navigator.of(context).pop(); // Pop game screen
+                Navigator.of(context).pop(); // Pop lobby screen
+                if (isHost) {
+                  Navigator.of(context)
+                      .pop(); // Pop online mode screen (host only)
+                }
+              } else {
+                Navigator.of(context).pop(); // Pop game screen (Pass & Play)
+              }
+            });
+          }
+
+          // In Pass & Play mode, show curtains between phases and turns
+          if (!isOnlineMode) {
+            // Show curtain after Player 1 selects, before Player 2 selects
+            if (state.phase == GamePhase.player2Selection &&
+                !_showPlayer2Curtain) {
+              setState(() {
+                _showPlayer2Curtain = true;
+              });
             }
-          });
-        }
 
-        // In Pass & Play mode, show curtains between phases and turns
-        if (!isOnlineMode) {
-          // Show curtain after Player 1 selects, before Player 2 selects
-          if (state.phase == GamePhase.player2Selection &&
-              !_showPlayer2Curtain) {
-            setState(() {
-              _showPlayer2Curtain = true;
-            });
+            // Show curtain after wrong guess (player switched)
+            if (state.phase == GamePhase.playing &&
+                _previousPlayer != null &&
+                _previousPlayer != state.currentPlayer) {
+              setState(() {
+                _showCurtain = true;
+              });
+            }
           }
 
-          // Show curtain after wrong guess (player switched)
-          if (state.phase == GamePhase.playing &&
-              _previousPlayer != null &&
-              _previousPlayer != state.currentPlayer) {
-            setState(() {
-              _showCurtain = true;
-            });
+          _previousPlayer = state.currentPlayer;
+        },
+        builder: (context, state) {
+          // In Pass & Play mode, show curtains
+          if (!isOnlineMode) {
+            // Show curtain before Player 2 selection
+            if (_showPlayer2Curtain &&
+                state.phase == GamePhase.player2Selection) {
+              return CurtainScreen(
+                nextPlayer: 2,
+                onContinue: () {
+                  setState(() {
+                    _showPlayer2Curtain = false;
+                  });
+                },
+                title: 'Player 2 Turn',
+                message: 'Now Player 2 will choose their person',
+              );
+            }
+
+            // Show curtain screen between turns
+            if (_showCurtain) {
+              return CurtainScreen(
+                nextPlayer: state.currentPlayer,
+                onContinue: () {
+                  setState(() {
+                    _showCurtain = false;
+                  });
+                  context.read<GameCubit>().startTurn(state.currentPlayer);
+                },
+              );
+            }
           }
-        }
 
-        _previousPlayer = state.currentPlayer;
-      },
-      builder: (context, state) {
-        // In Pass & Play mode, show curtains
-        if (!isOnlineMode) {
-          // Show curtain before Player 2 selection
-          if (_showPlayer2Curtain &&
-              state.phase == GamePhase.player2Selection) {
-            return CurtainScreen(
-              nextPlayer: 2,
-              onContinue: () {
-                setState(() {
-                  _showPlayer2Curtain = false;
-                });
-              },
-              title: 'Player 2 Turn',
-              message: 'Now Player 2 will choose their person',
-            );
-          }
+          // Game phase routing
+          switch (state.phase) {
+            case GamePhase.setup:
+              return _buildSetupScreen(
+                context,
+                state,
+                isOnlineMode,
+                myPlayerNumber,
+              );
+            case GamePhase.characterSelection:
+              // Both players select simultaneously in online mode
+              if (isOnlineMode && myPlayerNumber != null) {
+                final playerHasSelected = myPlayerNumber == 1
+                    ? state.player1Board.secretCharacterId != null
+                    : state.player2Board.secretCharacterId != null;
 
-          // Show curtain screen between turns
-          if (_showCurtain) {
-            return CurtainScreen(
-              nextPlayer: state.currentPlayer,
-              onContinue: () {
-                setState(() {
-                  _showCurtain = false;
-                });
-                context.read<GameCubit>().startTurn(state.currentPlayer);
-              },
-            );
-          }
-        }
+                if (playerHasSelected) {
+                  final opponentSelected = myPlayerNumber == 1
+                      ? state.player2Board.secretCharacterId != null
+                      : state.player1Board.secretCharacterId != null;
 
-        // Game phase routing
-        switch (state.phase) {
-          case GamePhase.setup:
-            return _buildSetupScreen(
-              context,
-              state,
-              isOnlineMode,
-              myPlayerNumber,
-            );
-          case GamePhase.characterSelection:
-            // Both players select simultaneously in online mode
-            if (isOnlineMode && myPlayerNumber != null) {
-              final playerHasSelected = myPlayerNumber == 1
-                  ? state.player1Board.secretCharacterId != null
-                  : state.player2Board.secretCharacterId != null;
+                  return _buildWaitingScreen(
+                    context,
+                    state,
+                    opponentSelected
+                        ? 'Starting game...'
+                        : 'Waiting for opponent to choose...',
+                  );
+                }
 
-              if (playerHasSelected) {
-                final opponentSelected = myPlayerNumber == 1
-                    ? state.player2Board.secretCharacterId != null
-                    : state.player1Board.secretCharacterId != null;
-
-                return _buildWaitingScreen(
+                return _buildCharacterSelectionScreen(
                   context,
                   state,
-                  opponentSelected
-                      ? 'Starting game...'
-                      : 'Waiting for opponent to choose...',
+                  myPlayerNumber,
+                  isOnline: true,
                 );
               }
 
-              return _buildCharacterSelectionScreen(
-                context,
-                state,
-                myPlayerNumber,
-              );
-            }
+              // Fallback for pass & play (should not hit this case)
+              final player1Selected =
+                  state.player1Board.secretCharacterId != null;
+              final player2Selected =
+                  state.player2Board.secretCharacterId != null;
 
-            // Fallback for pass & play (should not hit this case)
-            final player1Selected =
-                state.player1Board.secretCharacterId != null;
-            final player2Selected =
-                state.player2Board.secretCharacterId != null;
-
-            if (!player1Selected) {
-              return _buildCharacterSelectionScreen(context, state, 1);
-            } else if (!player2Selected) {
-              return _buildCharacterSelectionScreen(context, state, 2);
-            }
-
-            return _buildWaitingScreen(
-              context,
-              state,
-              'Starting game...',
-            );
-          case GamePhase.player1Selection:
-            // In online mode, show selection for appropriate player
-            if (isOnlineMode && myPlayerNumber != null) {
-              return _buildCharacterSelectionScreen(
-                context,
-                state,
-                myPlayerNumber,
-              );
-            }
-            return _buildCharacterSelectionScreen(context, state, 1);
-          case GamePhase.player2Selection:
-            // In online mode, player 2 also sees their own selection screen
-            if (isOnlineMode && myPlayerNumber != null) {
-              if (myPlayerNumber == 2) {
+              if (!player1Selected) {
+                return _buildCharacterSelectionScreen(context, state, 1);
+              } else if (!player2Selected) {
                 return _buildCharacterSelectionScreen(context, state, 2);
               }
-              // Player 1 waits for player 2
+
               return _buildWaitingScreen(
                 context,
                 state,
-                'Waiting for opponent to choose...',
+                'Starting game...',
               );
-            }
-            return _buildCharacterSelectionScreen(context, state, 2);
-          case GamePhase.playing:
-            return _buildPlayingScreen(
-              context,
-              state,
-              isOnlineMode,
-              myPlayerNumber,
-            );
-          case GamePhase.finished:
-            return _buildFinishedScreen(context, state);
-        }
-      },
+            case GamePhase.player1Selection:
+              // In online mode, show selection for appropriate player
+              if (isOnlineMode && myPlayerNumber != null) {
+                return _buildCharacterSelectionScreen(
+                  context,
+                  state,
+                  myPlayerNumber,
+                  isOnline: true,
+                );
+              }
+              return _buildCharacterSelectionScreen(context, state, 1);
+            case GamePhase.player2Selection:
+              // In online mode, player 2 also sees their own selection screen
+              if (isOnlineMode && myPlayerNumber != null) {
+                if (myPlayerNumber == 2) {
+                  return _buildCharacterSelectionScreen(
+                    context,
+                    state,
+                    2,
+                    isOnline: true,
+                  );
+                }
+                // Player 1 waits for player 2
+                return _buildWaitingScreen(
+                  context,
+                  state,
+                  'Waiting for opponent to choose...',
+                );
+              }
+              return _buildCharacterSelectionScreen(context, state, 2);
+            case GamePhase.playing:
+              return _buildPlayingScreen(
+                context,
+                state,
+                isOnlineMode,
+                myPlayerNumber,
+              );
+            case GamePhase.finished:
+              return _buildFinishedScreen(context, state);
+          }
+        },
+      ),
     );
   }
 
@@ -266,8 +276,9 @@ class _GameScreenState extends State<GameScreen> {
   Widget _buildCharacterSelectionScreen(
     BuildContext context,
     GameState state,
-    int player,
-  ) {
+    int player, {
+    bool isOnline = false,
+  }) {
     // Safety check: Don't render if deck is empty (can happen during cleanup)
     if (state.deck.characters.isEmpty) {
       return _buildWaitingScreen(context, state, 'Loading...');
@@ -276,11 +287,19 @@ class _GameScreenState extends State<GameScreen> {
     final playerBoard = state.getBoardForPlayer(player);
     final (rows, cols) = state.deck.gridDimensions;
 
+    final backgroundColor = isOnline
+        ? Colors.blue.shade50
+        : (player == 1 ? Colors.blue.shade50 : Colors.red.shade50);
+    final appBarColor =
+        isOnline ? Colors.blue : (player == 1 ? Colors.blue : Colors.red);
+    final title =
+        isOnline ? 'Choose Your Person' : 'Player $player: Choose Your Person';
+
     return Scaffold(
-      backgroundColor: player == 1 ? Colors.blue.shade50 : Colors.red.shade50,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('Player $player: Choose Your Person'),
-        backgroundColor: player == 1 ? Colors.blue : Colors.red,
+        title: Text(title),
+        backgroundColor: appBarColor,
       ),
       body: SafeArea(
         child: Padding(
@@ -353,24 +372,32 @@ class _GameScreenState extends State<GameScreen> {
         ? myPlayerNumber
         : state.currentPlayer;
 
+    final isMyTurn = !isOnlineMode || (myPlayerNumber == state.currentPlayer);
+    final isGuessMode = isMyTurn && state.currentAction == TurnAction.guessing;
+
+    final appBarColor = isOnlineMode
+        ? (isMyTurn ? Colors.blue : Colors.red)
+        : (displayPlayer == 1 ? Colors.blue : Colors.red);
+    final scaffoldColor =
+        displayPlayer == 1 ? Colors.blue.shade50 : Colors.red.shade50;
+
+    final statusBarColor = isOnlineMode
+        ? (isMyTurn ? Colors.blue.shade50 : Colors.red.shade50)
+        : (isGuessMode ? Colors.blue.shade50 : Colors.white);
+
     final currentBoard = state.getBoardForPlayer(displayPlayer);
     final opponentBoard = state.getOpponentBoard(displayPlayer);
     final (rows, cols) = state.deck.gridDimensions;
 
-    // In online mode, check if it's this player's turn
-    final isMyTurn = !isOnlineMode || (myPlayerNumber == state.currentPlayer);
-    final isGuessMode = isMyTurn && state.currentAction == TurnAction.guessing;
-
     return Scaffold(
-      backgroundColor:
-          displayPlayer == 1 ? Colors.blue.shade50 : Colors.red.shade50,
+      backgroundColor: scaffoldColor,
       appBar: AppBar(
         title: Text(
           isOnlineMode
               ? (isMyTurn ? 'Your Turn' : 'Opponent\'s Turn')
               : 'Player ${state.currentPlayer} Turn',
         ),
-        backgroundColor: displayPlayer == 1 ? Colors.blue : Colors.red,
+        backgroundColor: appBarColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -386,7 +413,7 @@ class _GameScreenState extends State<GameScreen> {
             // Status bar
             Container(
               padding: const EdgeInsets.all(16),
-              color: isGuessMode ? Colors.blue.shade50 : Colors.white,
+              color: statusBarColor,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -481,12 +508,21 @@ class _GameScreenState extends State<GameScreen> {
                               context.read<GameCubit>().toggleGuessMode();
                             }
                           : null,
-                      icon:
-                          Icon(isGuessMode ? Icons.cancel : Icons.help_outline),
-                      label: Text(isGuessMode ? 'Cancel Guess' : 'Guess'),
+                      icon: Icon(
+                        isGuessMode ? Icons.cancel : Icons.help_outline,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        isGuessMode ? 'Cancel Guess' : 'Guess',
+                        style: const TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
                             isGuessMode ? Colors.grey : Colors.blue,
+                        foregroundColor:
+                            isGuessMode ? Colors.grey : Colors.white,
                         padding: const EdgeInsets.all(12),
                       ),
                     ),
@@ -508,8 +544,12 @@ class _GameScreenState extends State<GameScreen> {
                               }
                             }
                           : null,
-                      icon: const Icon(Icons.navigate_next),
-                      label: const Text('End Turn'),
+                      icon:
+                          const Icon(Icons.navigate_next, color: Colors.black),
+                      label: const Text(
+                        'End Turn',
+                        style: TextStyle(color: Colors.black),
+                      ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.all(12),
                       ),
@@ -529,7 +569,8 @@ class _GameScreenState extends State<GameScreen> {
     String winnerName;
     final gameCubit = context.read<GameCubit>();
 
-    if (gameCubit.state.mode == GameMode.online) {
+    final isOnlineMode = gameCubit.state.mode == GameMode.online;
+    if (isOnlineMode) {
       // Try to get player names from lobby
       try {
         final lobby = context.read<LobbyCubit>().state.lobby;
@@ -557,7 +598,9 @@ class _GameScreenState extends State<GameScreen> {
             Icon(
               Icons.emoji_events,
               size: 120,
-              color: state.winner == 1 ? Colors.blue : Colors.red,
+              color: isOnlineMode
+                  ? Colors.blue
+                  : (state.winner == 1 ? Colors.blue : Colors.red),
             ),
             const SizedBox(height: 32),
             Text(
@@ -581,6 +624,54 @@ class _GameScreenState extends State<GameScreen> {
         ),
       ),
     );
+  }
+
+  Future<bool> _handleBackNavigation(
+    BuildContext context,
+    bool isOnlineMode,
+  ) async {
+    if (!isOnlineMode) {
+      return true;
+    }
+
+    final gameCubit = context.read<GameCubit>();
+    final myPlayerNumber = gameCubit.myPlayerNumber;
+
+    if (myPlayerNumber == null) {
+      // Fallback - treat as normal pop
+      return true;
+    }
+
+    final shouldLeave = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Leave Game'),
+            content: const Text('Do you want to leave the game?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child:
+                    const Text('Stay', style: TextStyle(color: Colors.black)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                ),
+                child:
+                    const Text('Leave', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldLeave) {
+      gameCubit.forfeitGame(losingPlayer: myPlayerNumber);
+    }
+
+    // Prevent navigation pop; game end flow will handle exiting
+    return false;
   }
 
   void _showGameInfo(BuildContext context, GameState state) {
@@ -645,7 +736,10 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.black),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -653,7 +747,7 @@ class _GameScreenState extends State<GameScreen> {
               onConfirm();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            child: const Text('Guess'),
+            child: const Text('Guess', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

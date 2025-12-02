@@ -361,7 +361,7 @@ class _MenuScreenState extends State<MenuScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -369,7 +369,8 @@ class _MenuScreenState extends State<MenuScreen> {
                 Navigator.of(context).pop(nameController.text.trim());
               }
             },
-            child: const Text('Continue'),
+            child:
+                const Text('Continue', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),

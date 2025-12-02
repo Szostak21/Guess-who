@@ -268,11 +268,11 @@ class _CreateLobbyScreenState extends State<CreateLobbyScreen> {
                         onPressed: () => _startGame(context, state),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
-                          backgroundColor: Colors.green,
+                          backgroundColor: Colors.blue,
                         ),
                         child: const Text(
                           'START GAME',
-                          style: TextStyle(fontSize: 18),
+                          style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                       ),
                     if (state.status != LobbyStateStatus.ready)

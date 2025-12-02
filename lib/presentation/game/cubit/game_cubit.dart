@@ -359,6 +359,15 @@ class GameCubit extends Cubit<GameState> {
     _sendStateUpdate();
   }
 
+  /// Forfeit the game (used when a player leaves in online mode)
+  void forfeitGame({required int losingPlayer}) {
+    if (state.mode != GameMode.online) return;
+    if (state.phase == GamePhase.finished) return;
+
+    final winner = losingPlayer == 1 ? 2 : 1;
+    _endGame(winner: winner);
+  }
+
   /// End the game with a winner
   void _endGame({required int winner}) {
     final result = winner == 1 ? GameResult.player1Won : GameResult.player2Won;

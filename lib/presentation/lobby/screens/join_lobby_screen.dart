@@ -34,7 +34,7 @@ class _JoinLobbyScreenState extends State<JoinLobbyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Join Lobby'),
+        title: const Text('Join Lobby', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
       body: BlocConsumer<LobbyCubit, LobbyState>(
@@ -285,7 +285,8 @@ class _JoinLobbyScreenState extends State<JoinLobbyScreen> {
                               )
                             : const Text(
                                 'JOIN LOBBY',
-                                style: TextStyle(fontSize: 18),
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.white),
                               ),
                       ),
 
