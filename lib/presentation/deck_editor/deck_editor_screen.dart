@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math';
 import 'dart:io';
-import '../../data/models/character.dart';
 import '../../data/models/deck.dart';
 import '../../data/repositories/deck_repository.dart';
 import 'package:image_picker/image_picker.dart';

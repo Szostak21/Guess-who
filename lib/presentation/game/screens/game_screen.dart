@@ -124,6 +124,51 @@ class _GameScreenState extends State<GameScreen> {
               isOnlineMode,
               myPlayerNumber,
             );
+          case GamePhase.characterSelection:
+            // Both players select simultaneously in online mode
+            if (isOnlineMode && myPlayerNumber != null) {
+              final playerHasSelected = myPlayerNumber == 1
+                  ? state.player1Board.secretCharacterId != null
+                  : state.player2Board.secretCharacterId != null;
+
+              if (playerHasSelected) {
+                final opponentSelected = myPlayerNumber == 1
+                    ? state.player2Board.secretCharacterId != null
+                    : state.player1Board.secretCharacterId != null;
+
+                return _buildWaitingScreen(
+                  context,
+                  state,
+                  opponentSelected
+                      ? 'Starting game...'
+                      : 'Waiting for opponent to choose...',
+                );
+              }
+
+              return _buildCharacterSelectionScreen(
+                context,
+                state,
+                myPlayerNumber,
+              );
+            }
+
+            // Fallback for pass & play (should not hit this case)
+            final player1Selected =
+                state.player1Board.secretCharacterId != null;
+            final player2Selected =
+                state.player2Board.secretCharacterId != null;
+
+            if (!player1Selected) {
+              return _buildCharacterSelectionScreen(context, state, 1);
+            } else if (!player2Selected) {
+              return _buildCharacterSelectionScreen(context, state, 2);
+            }
+
+            return _buildWaitingScreen(
+              context,
+              state,
+              'Starting game...',
+            );
           case GamePhase.player1Selection:
             // In online mode, show selection for appropriate player
             if (isOnlineMode && myPlayerNumber != null) {
@@ -539,7 +584,20 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _showGameInfo(BuildContext context, GameState state) {
-    final currentBoard = state.getBoardForPlayer(state.currentPlayer);
+    final gameCubit = context.read<GameCubit>();
+    final isOnlineMode = gameCubit.state.mode == GameMode.online;
+    final myPlayerNumber = isOnlineMode ? gameCubit.myPlayerNumber : null;
+
+    final playerToShow = isOnlineMode && myPlayerNumber != null
+        ? myPlayerNumber
+        : state.currentPlayer;
+
+    final currentBoard = state.getBoardForPlayer(playerToShow);
+
+    if (currentBoard.secretCharacterId == null) {
+      return;
+    }
+
     final secretChar = state.deck.characters.firstWhere(
       (c) => c.id == currentBoard.secretCharacterId,
     );

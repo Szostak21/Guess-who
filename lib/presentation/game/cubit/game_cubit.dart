@@ -69,9 +69,11 @@ class GameCubit extends Cubit<GameState> {
           final incomingState = GameState.fromJson(gameStateJson);
 
           // Apply the update but keep our local deck to preserve image paths
-          emit(incomingState.copyWith(
-            deck: state.deck, // Keep local deck with image paths
-          ));
+          emit(
+            incomingState.copyWith(
+              deck: state.deck, // Keep local deck with image paths
+            ),
+          );
           break;
 
         default:
@@ -144,44 +146,88 @@ class GameCubit extends Cubit<GameState> {
   void beginCharacterSelection() {
     if (state.phase != GamePhase.setup) return;
 
-    emit(state.copyWith(phase: GamePhase.player1Selection));
+    if (state.mode == GameMode.online) {
+      emit(state.copyWith(phase: GamePhase.characterSelection));
+    } else {
+      emit(state.copyWith(phase: GamePhase.player1Selection));
+    }
   }
 
   /// Player 1 selects their secret character
   void player1SelectCharacter(String characterId) {
-    if (state.phase != GamePhase.player1Selection) return;
+    final isSimultaneous = state.phase == GamePhase.characterSelection;
+    if (!isSimultaneous && state.phase != GamePhase.player1Selection) return;
+
+    // Prevent re-selection during simultaneous flow
+    if (isSimultaneous && state.player1Board.secretCharacterId != null) return;
 
     final updatedBoard = state.player1Board.copyWith(
       secretCharacterId: characterId,
     );
 
-    emit(
-      state.copyWith(
-        player1Board: updatedBoard,
-        phase: GamePhase.player2Selection,
-      ),
-    );
+    if (isSimultaneous) {
+      final bothSelected = state.player2Board.secretCharacterId != null;
+
+      emit(
+        state.copyWith(
+          player1Board: updatedBoard,
+          phase:
+              bothSelected ? GamePhase.playing : GamePhase.characterSelection,
+          currentPlayer: bothSelected ? 1 : state.currentPlayer,
+          currentAction: bothSelected ? TurnAction.asking : state.currentAction,
+          hasFlippedThisTurn: false,
+          flippedThisTurn: {},
+        ),
+      );
+    } else {
+      emit(
+        state.copyWith(
+          player1Board: updatedBoard,
+          phase: GamePhase.player2Selection,
+        ),
+      );
+    }
 
     _sendStateUpdate();
   }
 
   /// Player 2 selects their secret character
   void player2SelectCharacter(String characterId) {
-    if (state.phase != GamePhase.player2Selection) return;
+    final isSimultaneous = state.phase == GamePhase.characterSelection;
+    if (!isSimultaneous && state.phase != GamePhase.player2Selection) return;
+
+    if (isSimultaneous && state.player2Board.secretCharacterId != null) return;
 
     final updatedBoard = state.player2Board.copyWith(
       secretCharacterId: characterId,
     );
 
-    // Both players ready, start the game
-    emit(
-      state.copyWith(
-        player2Board: updatedBoard,
-        phase: GamePhase.playing,
-        currentPlayer: 1,
-        currentAction: TurnAction.asking,
-      ),
-    );
+    if (isSimultaneous) {
+      final bothSelected = state.player1Board.secretCharacterId != null;
+
+      emit(
+        state.copyWith(
+          player2Board: updatedBoard,
+          phase:
+              bothSelected ? GamePhase.playing : GamePhase.characterSelection,
+          currentPlayer: bothSelected ? 1 : state.currentPlayer,
+          currentAction: bothSelected ? TurnAction.asking : state.currentAction,
+          hasFlippedThisTurn: false,
+          flippedThisTurn: {},
+        ),
+      );
+    } else {
+      emit(
+        state.copyWith(
+          player2Board: updatedBoard,
+          phase: GamePhase.playing,
+          currentPlayer: 1,
+          currentAction: TurnAction.asking,
+          hasFlippedThisTurn: false,
+          flippedThisTurn: {},
+        ),
+      );
+    }
 
     _sendStateUpdate();
   }

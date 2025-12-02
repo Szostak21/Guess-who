@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/models/deck.dart';
 import '../cubit/lobby_cubit.dart';
 import 'create_lobby_screen.dart';
-import 'join_lobby_screen.dart';
 
 /// Screen for choosing to host or join an online game
 class OnlineModeScreen extends StatefulWidget {

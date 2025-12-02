@@ -14,7 +14,6 @@ part 'lobby_state.dart';
 class LobbyCubit extends Cubit<LobbyState> {
   final P2PWebSocketServer _server;
   final GameWebSocketService _wsService;
-  Lobby? _lobby;
   bool _gameInProgress = false;
 
   LobbyCubit({

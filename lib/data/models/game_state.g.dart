@@ -55,6 +55,7 @@ const _$GameModeEnumMap = {
 
 const _$GamePhaseEnumMap = {
   GamePhase.setup: 'setup',
+  GamePhase.characterSelection: 'characterSelection',
   GamePhase.player1Selection: 'player1Selection',
   GamePhase.player2Selection: 'player2Selection',
   GamePhase.playing: 'playing',
