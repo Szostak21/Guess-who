@@ -16,6 +16,7 @@ class Deck extends Equatable {
   final List<Character> characters;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isBaseDeck;
 
   const Deck({
     required this.id,
@@ -23,6 +24,7 @@ class Deck extends Equatable {
     required this.characters,
     required this.createdAt,
     required this.updatedAt,
+    this.isBaseDeck = false,
   });
 
   factory Deck.fromJson(Map<String, dynamic> json) => _$DeckFromJson(json);
@@ -30,7 +32,8 @@ class Deck extends Equatable {
   Map<String, dynamic> toJson() => _$DeckToJson(this);
 
   @override
-  List<Object?> get props => [id, name, characters, createdAt, updatedAt];
+  List<Object?> get props =>
+      [id, name, characters, createdAt, updatedAt, isBaseDeck];
 
   /// Returns the number of characters in the deck
   int get size => characters.length;
@@ -72,6 +75,7 @@ class Deck extends Equatable {
     List<Character>? characters,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isBaseDeck,
   }) {
     return Deck(
       id: id ?? this.id,
@@ -79,6 +83,7 @@ class Deck extends Equatable {
       characters: characters ?? this.characters,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isBaseDeck: isBaseDeck ?? this.isBaseDeck,
     );
   }
 }

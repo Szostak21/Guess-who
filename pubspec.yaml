@@ -45,3 +45,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/decks/
+    - assets/decks/clash_royale/
+    - assets/decks/animals/
+    - assets/images/menu/
+    - assets/audio/music/
+    - assets/audio/sfx/

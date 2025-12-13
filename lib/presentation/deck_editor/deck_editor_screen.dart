@@ -264,8 +264,11 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.person_add,
-                              size: 64, color: Colors.blue,),
+                          const Icon(
+                            Icons.person_add,
+                            size: 64,
+                            color: Colors.blue,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'No characters yet',
@@ -388,19 +391,7 @@ class _CharacterEditorCard extends StatelessWidget {
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4),
                           ),
-                          child: Image.file(
-                            File(character.imagePath!),
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.person,
-                                size: 48,
-                                color: Colors.grey,
-                              );
-                            },
-                          ),
+                          child: _buildCharacterImage(character.imagePath!),
                         )
                       : const Icon(Icons.person, size: 48, color: Colors.grey),
                 ),
@@ -447,6 +438,41 @@ class _CharacterEditorCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// Build character image - handles both asset paths and file paths
+  Widget _buildCharacterImage(String imagePath) {
+    // Check if it's an asset path (starts with 'assets/')
+    if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.person,
+            size: 48,
+            color: Colors.grey,
+          );
+        },
+      );
+    }
+
+    // Otherwise it's a file path (user-created deck)
+    return Image.file(
+      File(imagePath),
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return const Icon(
+          Icons.person,
+          size: 48,
+          color: Colors.grey,
+        );
+      },
     );
   }
 }
