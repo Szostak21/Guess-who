@@ -6,28 +6,26 @@ The app includes built‑in base decks, a full Deck Editor (camera + gallery), P
 
 ## ✨ Highlights
 
+Below are the key features — descriptions first, followed by a compact inline gallery.
 
 ### Play with your photos
 
 Create personal decks quickly from the camera or gallery. Use 6–30 photos per deck to make games personal and memorable.
 
-![Adding a character in the Deck Editor](docs/media/add_character_demo.jpg)
-
----
-
 ### Pass & Play — Turn-based gameplay
 
 Real‑time, turn‑based gameplay with curtain screens that keep selections private when players share one device.
-
-![Game screen](docs/media/game_demo.jpg)
-
----
 
 ### Online mode — Play over Wi‑Fi
 
 Play with a friend on the same Wi‑Fi network. Online supports simultaneous character selection and live state sync.
 
-![Online mode lobby / gameplay state](docs/media/multiplayer_demo.jpg)
+
+<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;">
+   <img src="docs/media/add_character_demo.jpg" alt="Add character" style="width:32%;height:auto;;border-radius:6px;" />
+   <img src="docs/media/game_demo.jpg" alt="Game screen" style="width:32%;height:auto;;border-radius:6px;" />
+   <img src="docs/media/multiplayer_demo.jpg" alt="Online mode" style="width:32%;height:auto;;border-radius:6px;" />
+</div>
 
 ## ❤️ Why you'll love it
 
