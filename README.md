@@ -1,12 +1,10 @@
-# Guess Who? — But with your friends!
+# Guess Who? But with your friends!
 
 **Guess Who?** is an online implementation of classic board game but with characters of your choice! Use photos of friends, family, classmates or coworkers to build decks and play instantly. The Deck Editor lets you import from the gallery or take quick photos with your camera so each game is personal and recognisable.
 
 The app includes built‑in base decks, a full Deck Editor (camera + gallery), Pass & Play, and online play support.
 
 ## ✨ Highlights
-
-Below are the key features — descriptions first, followed by a compact inline gallery.
 
 ### Play with your photos
 
