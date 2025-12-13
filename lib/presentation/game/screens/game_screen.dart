@@ -6,6 +6,7 @@ import '../../../data/models/game_enums.dart';
 import '../widgets/character_card.dart';
 import '../widgets/curtain_screen.dart';
 import '../../lobby/cubit/lobby_cubit.dart';
+import 'dart:io';
 
 /// Main game screen that handles all game phases
 class GameScreen extends StatefulWidget {
@@ -399,11 +400,18 @@ class _GameScreenState extends State<GameScreen> {
         ),
         backgroundColor: appBarColor,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
+          TextButton(
             onPressed: () {
               _showGameInfo(context, state);
             },
+            child: const Text(
+              'Show\nSelection',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
           ),
         ],
       ),
@@ -700,7 +708,25 @@ class _GameScreenState extends State<GameScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.person, size: 64),
+            // Character image
+            Container(
+              width: 200,
+              height: 280,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade400, width: 2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: secretChar.imagePath != null
+                    ? _buildCharacterImage(secretChar.imagePath!)
+                    : Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.person,
+                            size: 64, color: Colors.grey),
+                      ),
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
               secretChar.name,
@@ -718,6 +744,35 @@ class _GameScreenState extends State<GameScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Build character image - handles both asset paths and file paths
+  Widget _buildCharacterImage(String imagePath) {
+    // Check if it's an asset path (starts with 'assets/')
+    if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.shade200,
+            child: const Icon(Icons.person, size: 64, color: Colors.grey),
+          );
+        },
+      );
+    }
+
+    // Otherwise it's a file path (user-created deck)
+    return Image.file(
+      File(imagePath),
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: const Icon(Icons.person, size: 64, color: Colors.grey),
+        );
+      },
     );
   }
 

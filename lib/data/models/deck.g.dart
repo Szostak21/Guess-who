@@ -14,6 +14,7 @@ Deck _$DeckFromJson(Map<String, dynamic> json) => Deck(
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isBaseDeck: json['isBaseDeck'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$DeckToJson(Deck instance) => <String, dynamic>{
@@ -22,4 +23,5 @@ Map<String, dynamic> _$DeckToJson(Deck instance) => <String, dynamic>{
       'characters': instance.characters,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
+      'isBaseDeck': instance.isBaseDeck,
     };

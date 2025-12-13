@@ -1,0 +1,68 @@
+{
+  "decks": [
+    {
+      "id": "clash_royale",
+      "name": "Clash Royale",
+      "description": "Characters from the popular mobile game",
+      "characters": [
+        {"id": "archers", "name": "Archers", "imagePath": "assets/decks/clash_royale/archers.png"},
+        {"id": "baby-dragon", "name": "Baby Dragon", "imagePath": "assets/decks/clash_royale/baby-dragon.png"},
+        {"id": "balloon", "name": "Balloon", "imagePath": "assets/decks/clash_royale/balloon.png"},
+        {"id": "barbarians", "name": "Barbarians", "imagePath": "assets/decks/clash_royale/barbarians.png"},
+        {"id": "battle-ram", "name": "Battle Ram", "imagePath": "assets/decks/clash_royale/battle-ram.png"},
+        {"id": "cannon", "name": "Cannon", "imagePath": "assets/decks/clash_royale/cannon.png"},
+        {"id": "elite-barbarians", "name": "Elite Barbarians", "imagePath": "assets/decks/clash_royale/elite-barbarians.png"},
+        {"id": "fireball", "name": "Fireball", "imagePath": "assets/decks/clash_royale/fireball.png"},
+        {"id": "firecracker", "name": "Firecracker", "imagePath": "assets/decks/clash_royale/firecracker.png"},
+        {"id": "giant", "name": "Giant", "imagePath": "assets/decks/clash_royale/giant.png"},
+        {"id": "goblin-barrel", "name": "Goblin Barrel", "imagePath": "assets/decks/clash_royale/goblin-barrel.png"},
+        {"id": "goblin-hut", "name": "Goblin Hut", "imagePath": "assets/decks/clash_royale/goblin-hut.png"},
+        {"id": "golem", "name": "Golem", "imagePath": "assets/decks/clash_royale/golem.png"},
+        {"id": "hog-rider", "name": "Hog Rider", "imagePath": "assets/decks/clash_royale/hog-rider.png"},
+        {"id": "knight", "name": "Knight", "imagePath": "assets/decks/clash_royale/knight.png"},
+        {"id": "mega-knight", "name": "Mega Knight", "imagePath": "assets/decks/clash_royale/mega-knight.png"},
+        {"id": "mini-pekka", "name": "Mini Pekka", "imagePath": "assets/decks/clash_royale/mini-pekka.png"},
+        {"id": "pekka", "name": "Pekka", "imagePath": "assets/decks/clash_royale/pekka.png"},
+        {"id": "rocket", "name": "Rocket", "imagePath": "assets/decks/clash_royale/rocket.png"},
+        {"id": "royal-giant", "name": "Royal Giant", "imagePath": "assets/decks/clash_royale/royal-giant.png"},
+        {"id": "royal-hogs", "name": "Royal Hogs", "imagePath": "assets/decks/clash_royale/royal-hogs.png"},
+        {"id": "royal-recruits", "name": "Royal Recruits", "imagePath": "assets/decks/clash_royale/royal-recruits.png"},
+        {"id": "skeletons", "name": "Skeletons", "imagePath": "assets/decks/clash_royale/skeletons.png"},
+        {"id": "sparky", "name": "Sparky", "imagePath": "assets/decks/clash_royale/sparky.png"},
+        {"id": "tesla", "name": "Tesla", "imagePath": "assets/decks/clash_royale/tesla.png"},
+        {"id": "the-log", "name": "The Log", "imagePath": "assets/decks/clash_royale/the-log.png"},
+        {"id": "valkyrie", "name": "Valkyrie", "imagePath": "assets/decks/clash_royale/valkyrie.png"},
+        {"id": "witch", "name": "Witch", "imagePath": "assets/decks/clash_royale/witch.png"},
+        {"id": "wizard", "name": "Wizard", "imagePath": "assets/decks/clash_royale/wizard.png"},
+        {"id": "x-bow", "name": "X-Bow", "imagePath": "assets/decks/clash_royale/x-bow.png"}
+      ]
+    },
+    {
+      "id": "animals",
+      "name": "Animals",
+      "description": "A collection of animal images",
+      "characters": [
+        {"id": "beaver", "name": "Beaver", "imagePath": "assets/decks/animals/Beaver.jpeg"},
+        {"id": "bunny", "name": "Bunny", "imagePath": "assets/decks/animals/Bunny.jpeg"},
+        {"id": "cat", "name": "Cat", "imagePath": "assets/decks/animals/Cat.jpeg"},
+        {"id": "cheetah", "name": "Cheetah", "imagePath": "assets/decks/animals/Cheetah.jpeg"},
+        {"id": "crocodile", "name": "Crocodile", "imagePath": "assets/decks/animals/Crocodile.jpeg"},
+        {"id": "elephant", "name": "Elephant", "imagePath": "assets/decks/animals/Elephant.jpeg"},
+        {"id": "fox", "name": "Fox", "imagePath": "assets/decks/animals/Fox.jpeg"},
+        {"id": "gazelle", "name": "Gazelle", "imagePath": "assets/decks/animals/Gazelle.jpeg"},
+        {"id": "giraffe", "name": "Giraffe", "imagePath": "assets/decks/animals/Giraffe.jpeg"},
+        {"id": "horse", "name": "Horse", "imagePath": "assets/decks/animals/Horse.jpeg"},
+        {"id": "koala", "name": "Koala", "imagePath": "assets/decks/animals/Koala.jpeg"},
+        {"id": "lion", "name": "Lion", "imagePath": "assets/decks/animals/Lion.jpeg"},
+        {"id": "lynx", "name": "Lynx", "imagePath": "assets/decks/animals/Lynx.jpeg"},
+        {"id": "moose", "name": "Moose", "imagePath": "assets/decks/animals/Moose.jpeg"},
+        {"id": "panda", "name": "Panda", "imagePath": "assets/decks/animals/Panda.jpeg"},
+        {"id": "penguin", "name": "Penguin", "imagePath": "assets/decks/animals/Penguin.jpeg"},
+        {"id": "rhino", "name": "Rhino", "imagePath": "assets/decks/animals/Rhino.jpeg"},
+        {"id": "seal", "name": "Seal", "imagePath": "assets/decks/animals/Seal.jpeg"},
+        {"id": "skunk", "name": "Skunk", "imagePath": "assets/decks/animals/Skunk.jpeg"},
+        {"id": "zebra", "name": "Zebra", "imagePath": "assets/decks/animals/Zebra.jpeg"}
+      ]
+    }
+  ]
+}

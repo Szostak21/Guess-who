@@ -109,13 +109,7 @@ class _CharacterCardState extends State<CharacterCard>
             child: widget.character.imagePath != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(widget.character.imagePath!),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildPlaceholder();
-                      },
-                    ),
+                    child: _buildCharacterImage(),
                   )
                 : _buildPlaceholder(),
           ),
@@ -218,6 +212,31 @@ class _CharacterCardState extends State<CharacterCard>
           color: Colors.grey.shade400,
         ),
       ),
+    );
+  }
+
+  /// Build character image - handles both asset paths and file paths
+  Widget _buildCharacterImage() {
+    final imagePath = widget.character.imagePath!;
+
+    // Check if it's an asset path (starts with 'assets/')
+    if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildPlaceholder();
+        },
+      );
+    }
+
+    // Otherwise it's a file path (user-created deck)
+    return Image.file(
+      File(imagePath),
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _buildPlaceholder();
+      },
     );
   }
 }
